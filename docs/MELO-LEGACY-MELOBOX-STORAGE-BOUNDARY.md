@@ -1,55 +1,94 @@
-# Melo Legacy — iPad-first và kết nối Melobox
+# Melo Legacy — Melobox, tài khoản học sinh và kết nối Melo Analytics
 
-## Mục tiêu
+## Tầm nhìn hệ sinh thái
 
-Melo Legacy là ứng dụng học tập, nghiên cứu và sáng tạo âm nhạc có thể vận hành độc lập trên iPad. Melobox là dự án lưu trữ độc lập, có thể kết nối trong tương lai để mở rộng không gian lưu trữ cá nhân.
+Melobox không chỉ là ổ lưu trữ bổ sung cho Melo Legacy. Melobox là **đám mây di sản cá nhân** của hệ sinh thái Melo, nơi mỗi học sinh/người dùng có thể đăng ký tài khoản miễn phí, sở hữu không gian riêng và lưu giữ tài sản âm nhạc của mình.
 
-## Ranh giới sản phẩm
+Melo Legacy là môi trường học tập, nghiên cứu, sáng tác và thực hành âm nhạc. Melo Analytics là lớp phân tích/thống kê hỗ trợ người dùng hiểu quá trình học tập, hoạt động và tài sản âm nhạc dựa trên dữ liệu được phép sử dụng.
 
-### Melo Legacy sở hữu
-- Music Data Model và các định dạng âm nhạc chuẩn.
-- Nhận dạng OMR và audio-to-MIDI chạy cục bộ trên thiết bị.
-- Đọc, chỉnh sửa, phát, luyện tập và nghiên cứu bản nhạc.
-- Metadata chuyên môn âm nhạc: tác giả, tác phẩm, giọng, nhịp, bè, phiên bản, chú giải và tiến trình học tập.
+Luồng sản phẩm định hướng:
 
-### Melobox sở hữu (khi kết nối trong tương lai)
-- Lưu trữ file và tài sản số dung lượng lớn.
-- Quản lý thư mục, dung lượng, chia sẻ, sao lưu và đồng bộ theo chính sách của Melobox.
-- Quyền truy cập và vòng đời của tài sản lưu trữ.
+1. Học sinh đăng ký tài khoản Melobox miễn phí.
+2. Mỗi tài khoản có vùng lưu trữ di sản cá nhân, hạn mức miễn phí do Melobox quy định và hiển thị minh bạch.
+3. Người dùng lưu trữ, quản lý và bảo vệ các tài sản âm nhạc cá nhân.
+4. Người dùng chủ động kết nối các dịch vụ Melo Analytics và Melo Legacy, cấp quyền theo từng phạm vi.
+5. Melo Legacy có thể mở, đọc, chỉnh sửa và lưu lại những tài sản mà người dùng cho phép sử dụng; kết quả mới có thể được lưu trở lại Melobox.
 
-## Hợp đồng tích hợp dự kiến
+## Vai trò từng hệ thống
 
-Melo Legacy không truy cập trực tiếp database hoặc filesystem nội bộ của Melobox. Tích hợp thông qua API/SDK công khai, được hai dự án thống nhất.
+### Melobox — tài khoản và đám mây di sản
 
-Storage Adapter nên cung cấp các thao tác trung lập:
+- Đăng ký, đăng nhập và quản lý tài khoản cá nhân.
+- Cấp không gian lưu trữ miễn phí cho học sinh; dung lượng và giới hạn gói phải do chính sách Melobox công bố, không mặc định một con số chưa được chốt.
+- Lưu bản nhạc, PDF, ảnh, MusicXML, MIDI, bản thu âm, video biểu diễn, sáng tác, tài liệu học tập và các giá trị âm nhạc cá nhân.
+- Quản lý thư mục, dung lượng, phiên bản, sao lưu, chia sẻ và quyền truy cập.
+- Cho phép chủ tài khoản xem, tải xuống, xuất dữ liệu và quản lý quyền kết nối ứng dụng.
+
+### Melo Analytics — phân tích và thống kê
+
+- Cung cấp phân tích tiến trình học tập, hoạt động âm nhạc và tài sản khi người dùng hoặc tổ chức có thẩm quyền cho phép.
+- Phân biệt dữ liệu cá nhân, dữ liệu lớp học và dữ liệu cộng đồng.
+- Chỉ nhận những trường dữ liệu cần thiết cho mục đích đã thông báo; không mặc nhiên đọc toàn bộ nội dung riêng tư trong Melobox.
+- Cung cấp kết quả phân tích có thể được dùng trong Melo Legacy nếu người dùng cấp quyền phù hợp.
+
+Tên và phạm vi chi tiết của Melo Analytics cần được đồng bộ với thiết kế chính thức của module Analytics trong hệ sinh thái.
+
+### Melo Legacy — không gian làm việc âm nhạc
+
+- Nhận dạng OMR và audio-to-MIDI, đọc, chỉnh sửa, phát, luyện tập, sáng tác và nghiên cứu âm nhạc.
+- Có thể hoạt động độc lập trên iPad, kể cả khi người dùng chưa có tài khoản Melobox.
+- Khi người dùng kết nối Melobox, cho phép chọn tài sản cá nhân để mở, nhập vào dự án, biên tập và lưu phiên bản mới trở lại kho.
+- Không tự động biến tài sản riêng thành tài sản dùng chung.
+
+## Ranh giới kỹ thuật và tích hợp
+
+Melo Legacy và Melobox tiếp tục là hai dự án/repository độc lập. Không nhập code/backend Melobox vào repository Melo Legacy và không tạo phụ thuộc bắt buộc giữa hai ứng dụng.
+
+Melo Legacy không truy cập trực tiếp database hoặc filesystem nội bộ của Melobox. Tích hợp thông qua API/SDK công khai, được hai dự án thống nhất. Thiết kế Storage Provider / Storage Adapter trung lập để có thể kết nối Melobox và các provider tương lai.
+
+Các thao tác dự kiến:
 - connect() / disconnect()
 - list() / getMetadata()
 - upload() / download()
-- createFolder() / move() / delete() (chỉ khi API Melobox cho phép và người dùng xác nhận)
-- getShareLink() (chỉ khi quyền chia sẻ được cấp)
+- createFolder() / move() / delete() (chỉ khi API cho phép và người dùng xác nhận)
+- getShareLink() (chỉ khi chủ tài sản cấp quyền chia sẻ)
+- authorizeAnalytics() / revokeAnalytics() (quyền truy cập Analytics được quản lý riêng, không suy ra từ quyền lưu trữ)
 
 Các kiểu dữ liệu gợi ý:
 - StorageProvider: local, melobox, future providers.
 - StoredAsset: ID ổn định, tên, MIME type, kích thước, checksum, createdAt, updatedAt, quyền truy cập và provider.
 - MusicAssetMetadata: loại tài liệu, tác giả, tác phẩm, nhạc cụ, khóa, nhịp, tempo, phiên bản MusicXML/MIDI và liên kết với Score ID.
 - SyncState: local-only, uploading, synced, conflict, error.
+- ConsentGrant: chủ thể cấp quyền, ứng dụng nhận quyền, phạm vi tài sản/dữ liệu, mục đích, thời điểm cấp và trạng thái thu hồi.
 
-Đây là bản phác thảo hợp đồng, chưa phải API Melobox đã tồn tại. Không cố định endpoint, token format hoặc schema backend khi chưa khảo sát và được thống nhất.
+Đây là bản phác thảo hợp đồng, chưa phải API Melobox hoặc Melo Analytics đã tồn tại. Không cố định endpoint, token format hoặc schema backend khi chưa khảo sát và thống nhất.
 
-## Nguyên tắc dữ liệu và quyền riêng tư
+## Quyền riêng tư, sở hữu và bảo vệ di sản
 
-- Melo Legacy hoạt động bình thường khi chưa kết nối Melobox.
-- Không tự động tải lên tài liệu; người dùng chủ động kết nối và chọn tài liệu/nhóm tài liệu.
+- Tài khoản và kho cá nhân thuộc quyền quản lý của từng học sinh/người dùng.
+- Tài sản cá nhân mặc định là riêng tư; chỉ chia sẻ khi chủ tài khoản chủ động cho phép.
+- Kết nối Melobox với Melo Legacy không đồng nghĩa cấp quyền cho mọi tài sản; người dùng chọn tệp/thư mục/phạm vi cần dùng.
+- Quyền cho Melo Analytics là một lựa chọn riêng, có mục đích rõ ràng và có thể thu hồi.
+- Dữ liệu học sinh không được dùng cho huấn luyện AI, phân tích cộng đồng hoặc mục đích khác nếu chưa có cơ sở quyền và sự đồng ý phù hợp.
+- Với học sinh chưa đủ tuổi, thiết kế đăng ký, đồng ý và chia sẻ phải tuân thủ yêu cầu bảo vệ trẻ em và quy định áp dụng.
 - Không đưa access token vào mã nguồn hoặc localStorage dạng văn bản thuần.
-- Tách metadata âm nhạc khỏi metadata lưu trữ; liên kết bằng ID ổn định.
 - Giữ bản gốc và lịch sử phiên bản; tránh ghi đè âm thầm.
 - Có trạng thái đồng bộ, xử lý xung đột và khả năng hủy.
-- Hỗ trợ xuất toàn bộ tài sản về định dạng phổ biến để tránh khóa chặt vào một nhà cung cấp.
+- Hỗ trợ xuất dữ liệu để người dùng không bị khóa chặt vào một nhà cung cấp.
+- Không tự động tải lên tài liệu từ iPad; người dùng phải chủ động chọn nội dung và xác nhận.
 
-## Trình tự triển khai
+## Lộ trình triển khai
 
-1. Hoàn thành luồng nhận dạng cục bộ trên iPad.
-2. Hoàn thiện lưu trữ cục bộ và xuất/nhập tài liệu.
-3. Khảo sát API và mô hình quyền của Melobox khi dự án Melobox sẵn sàng.
-4. Chốt API contract và luồng OAuth/token an toàn.
-5. Xây adapter Melobox ở nhánh riêng, kiểm thử độc lập; không làm Melo Legacy phụ thuộc bắt buộc.
+1. Hoàn thành luồng nhận dạng cục bộ trên iPad và lưu trữ cục bộ trong Melo Legacy.
+2. Xác định luồng đăng ký tài khoản Melobox miễn phí, chính sách dung lượng và quản lý tài sản cá nhân trong dự án Melobox.
+3. Chốt phạm vi và quyền dữ liệu của Melo Analytics.
+4. Khảo sát API, mô hình xác thực, phân quyền và đồng bộ của Melobox.
+5. Chốt API contract và luồng cấp/thu hồi quyền.
+6. Xây adapter Melobox và kết nối Analytics ở nhánh riêng, kiểm thử độc lập; không làm Melo Legacy phụ thuộc bắt buộc.
+7. Kiểm thử luồng học sinh: đăng ký miễn phí → lưu di sản → cấp quyền kết nối → mở/sử dụng trong Melo Legacy → lưu phiên bản mới trở lại Melobox.
+
+## Nguyên tắc repository
+
+- Mọi thay đổi Melo Legacy ở nhánh feature riêng, chờ anh Quý duyệt.
+- Không sửa/merge vào main khi chưa được anh Quý duyệt.
+- Không can thiệp repository Melobox khi đang làm Melo Legacy.
