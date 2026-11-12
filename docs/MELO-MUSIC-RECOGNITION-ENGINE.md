@@ -10,7 +10,7 @@ Nhánh `feature/melo-music-recognition-engine` sử dụng ứng dụng React + 
 - MusicXML `score-partwise`: đọc bè, ô nhịp, nốt, dấu lặng, cao độ, alter, octave, duration, voice, staff, tie, articulation và một phần thuộc tính key/time/clef.
 - MIDI Standard MIDI Files: đọc header, track chunks, variable-length quantities, running status, note-on/note-off, velocity, tên track, tempo, time signature và key signature; ghép nốt theo channel + pitch, chia dữ liệu thành ô nhịp theo nhịp chỉ định và tách sự kiện kéo dài qua vạch nhịp.
 - Hai bộ phân tích trả cùng một `ParseSummary` và cùng cấu trúc `Score`.
-- Giao diện đã kết nối parser thực cho MusicXML/MIDI; ảnh/PDF/audio/YouTube vẫn chưa được nhận dạng nội dung.\n- Bộ dựng khuông nhạc SVG thử nghiệm hiển thị khóa, nốt, dấu hóa, dấu lặng, vạch nhịp và các ô nhịp theo từng bè.
+- Giao diện đã kết nối parser thực cho MusicXML/MIDI; ảnh/PDF/audio/YouTube vẫn chưa được nhận dạng nội dung.\n- Bộ dựng khuông nhạc SVG thử nghiệm hiển thị khóa, nốt, dấu hóa, hóa biểu theo vòng quãng năm, số chỉ nhịp, dấu lặng theo trường độ cơ bản, dấu chấm, dấu nối và vạch nhịp.
 
 ## Giới hạn kỹ thuật hiện tại
 
@@ -18,7 +18,7 @@ Nhánh `feature/melo-music-recognition-engine` sử dụng ứng dụng React + 
 - Các thuộc tính MusicXML thay đổi theo từng ô nhịp; mô hình hiện lưu thuộc tính ở cấp ô nhịp nhưng chưa hỗ trợ đầy đủ mọi notation, tuplet, grace note, direction, lyric, multi-staff mapping và layout.
 - MIDI hiện quy đổi onset/duration theo PPQ, ghép note event và lưu metadata cơ bản. Chưa có quantization, voice separation, sustain pedal, controller automation, tempo map theo thời gian, nhiều tempo segment, hay chuyển thành notation engraving-ready. Tên nốt enharmonic đang dùng cách viết đơn giản.
 - MIDI format 2 được giữ track riêng và có cảnh báo; cách biểu diễn sequence độc lập sẽ được hoàn thiện.
-- Bộ dựng khuông nhạc hiện là preview, chưa phải Music Editor có thể chỉnh sửa; chưa có playback engine hoặc export MusicXML từ model.
+- Bộ dựng khuông nhạc hiện là preview, chưa phải Music Editor có thể chỉnh sửa; chưa có playback engine hoặc export MusicXML từ model. Cách viết dấu lặng và trường độ vẫn là quy ước hiển thị gần đúng, chưa thay thế bộ engraving chuyên dụng.
 
 ## Kiểm thử và nghiệm thu
 
