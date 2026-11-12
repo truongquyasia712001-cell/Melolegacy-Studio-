@@ -69,7 +69,7 @@ export default function App() {
         })
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Không thể xử lý tệp. Hãy kiểm tra API nhận dạng đã chạy chưa.')
+      setError(e instanceof TypeError ? 'Không kết nối được bộ xử lý nhận dạng. Hãy khởi chạy Music Recognition Sidecar theo hướng dẫn services/music-recognition/README.md.' : e instanceof Error ? e.message : 'Không thể xử lý tệp.')
     } finally { setBusy(false) }
   }
 
