@@ -17,7 +17,7 @@ Từ thư mục gốc repository:
 python -m venv .venv
 # macOS/Linux
 source .venv/bin/activate
-# Windows PowerShell: .venv\\Scripts\\Activate.ps1
+# Windows PowerShell: .venv\Scripts\Activate.ps1
 
 python -m pip install -r services/music-recognition/requirements.txt
 cd services/music-recognition
