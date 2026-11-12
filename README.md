@@ -1,8 +1,23 @@
-# MeloLegacy Studio
+# Melo Legacy Studio
 
-## Hệ sinh thái Di sản Âm nhạc
+**Memento of music, legacy of learning.**
 
-MeloLegacy là nền tảng giáo dục âm nhạc trực tuyến miễn phí, giúp mọi người học tập, sáng tác, thực hành và lưu giữ những giá trị âm nhạc.
+Melo Legacy Studio là nền tảng phát triển công cụ đọc, nhận dạng, nghiên cứu và sáng tác âm nhạc.
+
+## Chạy ứng dụng
+
+```bash
+npm install
+npm run dev
+```
+
+Kiểm tra bản production bằng `npm run build`.
+
+## MELO AI Music Recognition Engine
+
+Kiến trúc và lộ trình: [docs/MELO-MUSIC-RECOGNITION-ENGINE.md](docs/MELO-MUSIC-RECOGNITION-ENGINE.md).
+
+Nhánh phát triển này được dùng để thử nghiệm; không tự động hợp nhất vào `main`.
 
 ## Các không gian cốt lõi
 
@@ -13,14 +28,4 @@ MeloLegacy là nền tảng giáo dục âm nhạc trực tuyến miễn phí, g
 5. Phòng Âm nhạc
 6. Thư viện Di sản
 
-## Định hướng công nghệ
-
-- Progressive Web App (PWA)
-- Tối ưu cho iPad và Apple Pencil
-- Nhận dạng ký âm viết tay bằng AI
-- Hỗ trợ MusicXML và MIDI
-- Ưu tiên công cụ miễn phí và mã nguồn tự phát triển
-
-## Tầm nhìn
-
-Cùng học tập, sáng tác, bảo tồn và trao truyền di sản âm nhạc.
+Ưu tiên PWA, tối ưu iPad và Apple Pencil, MusicXML/MIDI, nhận dạng ký âm và công cụ mã nguồn mở.
