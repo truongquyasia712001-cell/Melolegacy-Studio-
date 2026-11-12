@@ -128,12 +128,44 @@ export function parseMidi(buffer: ArrayBuffer): ParseSummary {
     if (dangling) warnings.push(`${trackName}: ${dangling} nốt không có note-off tương ứng.`)
     tracks.push({ name: trackName, events, channel, program, endTick: tick })
   }
+  const beatsPerMeasure = timeSignature ? timeSignature.beats * 4 / timeSignature.beatType : 4
   const parts: ScorePart[] = tracks.map((track, index) => {
-    const measures: Measure[] = [{
-      number: '1', events: track.events,
+    const totalBeats = Math.max(track.endTick / division, ...track.events.map(event => event.onset + event.duration), 0)
+    const measureCount = Math.max(1, Math.ceil(totalBeats / beatsPerMeasure))
+    const measures: Measure[] = Array.from({ length: measureCount }, (_, measureIndex) => ({
+      number: String(measureIndex + 1),
+      events: [],
       ...(timeSignature ? { time: timeSignature } : {}),
       ...(keySignature ? { key: keySignature } : {}),
-    }]
+    }))
+    for (const event of track.events) {
+      const segments: { measureIndex: number; onset: number; duration: number }[] = []
+      let absoluteOnset = event.onset
+      let remaining = event.duration
+      if (remaining <= 0) {
+        const measureIndex = Math.min(measureCount - 1, Math.floor(absoluteOnset / beatsPerMeasure))
+        segments.push({ measureIndex, onset: absoluteOnset - measureIndex * beatsPerMeasure, duration: 0 })
+      } else {
+        while (remaining > 1e-9) {
+          const measureIndex = Math.min(measureCount - 1, Math.floor(absoluteOnset / beatsPerMeasure))
+          const localOnset = absoluteOnset - measureIndex * beatsPerMeasure
+          const segmentDuration = Math.min(remaining, beatsPerMeasure - localOnset)
+          segments.push({ measureIndex, onset: localOnset, duration: segmentDuration })
+          absoluteOnset += segmentDuration
+          remaining -= segmentDuration
+        }
+      }
+      segments.forEach((segment, segmentIndex) => {
+        measures[segment.measureIndex].events.push({
+          ...event,
+          id: segmentIndex === 0 ? event.id : `${event.id}-tie-${segmentIndex}`,
+          onset: segment.onset,
+          duration: segment.duration,
+          tieStart: segmentIndex < segments.length - 1,
+          tieStop: segmentIndex > 0,
+        })
+      })
+    }
     return { id: `midi-track-${index + 1}`, name: track.name, channel: track.channel, program: track.program, measures }
   })
   const score: Score = {
