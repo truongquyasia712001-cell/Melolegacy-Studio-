@@ -31,3 +31,10 @@ Cần chạy `npm ci`, `npm run build`, `npm run lint` trong môi trường Node
 3. Xây renderer khuông nhạc và playback piano tối thiểu.
 4. Nghiên cứu pipeline OMR ảnh/PDF mã nguồn mở.
 5. Mở rộng audio transcription và handwriting sau khi có cơ sở dữ liệu/đánh giá phù hợp.
+
+## MELO Piano Engine (prototype)
+
+- MusicXML/MIDI scores are rendered through the shared Score model and can now be played in-browser with Web Audio.
+- The first sound generator is an additive, multi-partial piano-like synthesis voice with velocity response, attack/decay/release shaping, low-pass damping, tempo control, volume, pause, resume and stop.
+- This is a functional prototype for transport and sound design. It is not a sampled acoustic grand piano and must not be described as one. The next sound-quality milestone is a legally redistributable multisample piano bank with velocity layers, pedal/sustain behavior, stereo recording and per-note release samples.
+- Audio-file pitch transcription is still not implemented. The current audio import only receives the file and reports its pending recognition state.

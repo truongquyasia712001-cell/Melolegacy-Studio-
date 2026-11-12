@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { parseMidi, parseMusicXml } from './music'
 import type { ParseSummary, Score } from './music'
 import { ScoreStaffPreview } from './music/ScoreStaffPreview'
+import { PianoPlayback } from './music/PianoPlayback'
 import './App.css'
 
 type Kind = 'musicxml' | 'midi' | 'image' | 'pdf' | 'audio'
@@ -42,7 +43,7 @@ export default function App() {
 
   function checkYoutube() {
     setError(''); setResult(null)
-    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(youtube.trim())) { setError('Đường dẫn YouTube chưa hợp lệ.'); return }
+    if (!/^https?:\\/\\/(www\\.)?(youtube\\.com|youtu\\.be)\\//i.test(youtube.trim())) { setError('Đường dẫn YouTube chưa hợp lệ.'); return }
     setResult({ title: 'Nguồn YouTube', status: 'pending', lines: [youtube.trim()], note: 'Đã kiểm tra định dạng URL. Chưa truy cập hay tải video. Phân tích chỉ thực hiện khi có quyền truy cập và phương thức sử dụng hợp lệ.' })
   }
 
@@ -59,6 +60,7 @@ export default function App() {
     {(result || error || busy) && <section className="section result"><div className="section-head"><div><span>02</span><h2>Kết quả tiếp nhận</h2></div>{result && <small className={result.status === 'read' ? 'tag ready' : 'tag pending'}>{result.status === 'read' ? 'ĐÃ ĐỌC DỮ LIỆU' : 'CHỜ BỘ NHẬN DẠNG'}</small>}</div>
       {busy && <p className="message">Đang đọc tệp...</p>}{error && <p className="error">{error}</p>}
       {result && <article className="result-card"><h3>{result.title}</h3><ul>{result.lines.map(line => <li key={line}>{line}</li>)}</ul>
+        {result.score && <PianoPlayback score={result.score} />}
         {result.score && <ScoreStaffPreview score={result.score} />}
         {result.score && <div className="event-preview"><div className="event-preview-head"><b>Dữ liệu ký âm đã chuẩn hóa</b><small>HIỂN THỊ MẪU · TỐI ĐA 16 SỰ KIỆN</small></div>
           {result.score.parts.map(part => <section className="part-preview" key={part.id}><b>{part.name}</b>
