@@ -1,10 +1,10 @@
 import { useRef, useState } from 'react'
 import { parseMidi, parseMusicXml } from './music'
-import type { ParseSummary } from './music'
+import type { ParseSummary, Score } from './music'
 import './App.css'
 
 type Kind = 'musicxml' | 'midi' | 'image' | 'pdf' | 'audio'
-type Result = { title: string; status: 'read' | 'pending'; lines: string[]; note: string }
+type Result = { title: string; status: 'read' | 'pending'; lines: string[]; note: string; score?: Score }
 const sources: { kind: Kind; title: string; detail: string; icon: string; accept: string }[] = [
   { kind: 'musicxml', title: 'MusicXML', detail: 'Đọc cấu trúc ký âm', icon: '♫', accept: '.musicxml,.xml' },
   { kind: 'midi', title: 'MIDI', detail: 'Đọc track và sự kiện nốt', icon: '⌁', accept: '.mid,.midi' },
@@ -13,7 +13,7 @@ const sources: { kind: Kind; title: string; detail: string; icon: string; accept
   { kind: 'audio', title: 'Âm thanh', detail: 'WAV, MP3, M4A · phân tích đang phát triển', icon: '◖', accept: 'audio/*,.wav,.mp3,.m4a' },
 ]
 function toResult(parsed: ParseSummary): Result {
-  return { title: parsed.score.title, status: 'read', lines: parsed.lines, note: parsed.note }
+  return { title: parsed.score.title, status: 'read', lines: parsed.lines, note: parsed.note, score: parsed.score }
 }
 
 export default function App() {
@@ -57,7 +57,15 @@ export default function App() {
     </section>
     {(result || error || busy) && <section className="section result"><div className="section-head"><div><span>02</span><h2>Kết quả tiếp nhận</h2></div>{result && <small className={result.status === 'read' ? 'tag ready' : 'tag pending'}>{result.status === 'read' ? 'ĐÃ ĐỌC DỮ LIỆU' : 'CHỜ BỘ NHẬN DẠNG'}</small>}</div>
       {busy && <p className="message">Đang đọc tệp...</p>}{error && <p className="error">{error}</p>}
-      {result && <article className="result-card"><h3>{result.title}</h3><ul>{result.lines.map(line => <li key={line}>{line}</li>)}</ul><p>{result.note}</p></article>}
+      {result && <article className="result-card"><h3>{result.title}</h3><ul>{result.lines.map(line => <li key={line}>{line}</li>)}</ul>
+        {result.score && <div className="event-preview"><div className="event-preview-head"><b>Dữ liệu ký âm đã chuẩn hóa</b><small>HIỂN THỊ MẪU · TỐI ĐA 16 SỰ KIỆN</small></div>
+          {result.score.parts.map(part => <section className="part-preview" key={part.id}><b>{part.name}</b>
+            {part.measures.map(measure => <div className="measure-preview" key={part.id + '-' + measure.number}><span>Ô nhịp {measure.number}</span>
+              <div>{measure.events.slice(0, 16).map(event => <span className="event-chip" key={event.id}>{event.kind === 'rest' ? 'Dấu lặng' : event.pitch ? event.pitch.step + (event.pitch.alter > 0 ? '♯' : event.pitch.alter < 0 ? '♭' : '') + event.pitch.octave : 'Nốt chưa rõ'} · {event.duration} phách</span>)}</div>
+            </div>)}
+          </section>)}
+        </div>}
+        <p>{result.note}</p></article>}
     </section>}
     <section className="section"><div className="section-head"><div><span>03</span><h2>Đường đi đến Music Editor</h2></div></div><div className="flow">
       <div><small>01</small><b>Nguồn đầu vào</b><span>Ảnh · PDF · XML · MIDI</span></div><i>→</i><div><small>02</small><b>Nhận dạng & chuẩn hóa</b><span>Music Data Engine</span></div><i>→</i><div><small>03</small><b>Music Editor</b><span>Đọc · Sửa · Phát · Lưu</span></div>
