@@ -5,7 +5,7 @@ export interface RecognitionResponse {
   warnings?: string[]
 }
 
-const apiBase = (import.meta.env.VITE_MUSIC_RECOGNITION_API || '').replace(/\\/$/, '')
+const apiBase = (import.meta.env.VITE_MUSIC_RECOGNITION_API || '').replace(/\/$/, '')
 
 async function postFile(path: string, file: File): Promise<RecognitionResponse> {
   const body = new FormData()
