@@ -22,7 +22,6 @@ class MidiReader {
   }
 }
 interface RawTrack { name: string; events: ScoreEvent[]; channel?: number; program?: number; endTick: number }
-const keyNames = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B']
 function decodeText(bytes: number[]) { return new TextDecoder().decode(new Uint8Array(bytes)) }
 
 export function parseMidi(buffer: ArrayBuffer): ParseSummary {
@@ -38,6 +37,7 @@ export function parseMidi(buffer: ArrayBuffer): ParseSummary {
   if (division & 0x8000) throw new Error('MIDI dùng SMPTE time division; hiện chỉ hỗ trợ PPQ ticks.')
   if (division === 0) throw new Error('MIDI PPQ không hợp lệ.')
   const tracks: RawTrack[] = []
+  const warnings: string[] = []
   let tempo = 120
   let timeSignature: { beats: number; beatType: number } | undefined
   let keySignature: { fifths: number; mode: string } | undefined
@@ -125,9 +125,8 @@ export function parseMidi(buffer: ArrayBuffer): ParseSummary {
       }
     }
     const dangling = Array.from(active.values()).reduce((sum, queue) => sum + queue.length, 0)
-    const trackWarnings = dangling ? [`${trackName}: ${dangling} nốt không có note-off tương ứng.`] : []
+    if (dangling) warnings.push(`${trackName}: ${dangling} nốt không có note-off tương ứng.`)
     tracks.push({ name: trackName, events, channel, program, endTick: tick })
-    if (trackWarnings.length) void trackWarnings
   }
   const parts: ScorePart[] = tracks.map((track, index) => {
     const measures: Measure[] = [{
@@ -141,7 +140,7 @@ export function parseMidi(buffer: ArrayBuffer): ParseSummary {
     schemaVersion: '1.0', title: 'Tệp MIDI', sourceFormat: 'midi', parts, tempo,
     timeDivision: division,
     durationQuarterNotes: Math.max(0, ...tracks.map(track => track.endTick / division)),
-    warnings: [],
+    warnings,
   }
   if (format === 2) score.warnings.push('MIDI format 2 chứa các sequence độc lập; hiện đang trình bày từng track như một phần riêng.')
   if (tracks.some(track => track.events.length === 0)) score.warnings.push('Có track không tạo được cặp note-on/note-off hoàn chỉnh.')
@@ -156,7 +155,7 @@ export function parseMidi(buffer: ArrayBuffer): ParseSummary {
       'Tên bè: ' + tracks.map(track => track.name).join(', '),
       'Số nốt ghép cặp: ' + noteCount,
       'Thời lượng: ' + score.durationQuarterNotes.toFixed(2) + ' phách',
-      'Cách ghi tên nốt: ' + keyNames.join(' '),
+      ...warnings,
     ],
     note: 'Đã đọc note-on/note-off, velocity, tempo, time signature, key signature và tên track. Dữ liệu MIDI được quy đổi sang phách; việc viết lại thành khuông nhạc chuẩn vẫn cần bước phân bè, lượng tử hóa và chọn enharmonic spelling.',
   }

@@ -20,7 +20,7 @@ function parsePitch(note: Element): Pitch | undefined {
   const alter = number(pitch, 'alter', 0)
   return { step, alter, octave, midi: pitchToMidi(step, alter, octave) }
 }
-function parseMeasure(element: Element, fallbackNumber: number): Measure {
+function parseMeasure(element: Element, fallbackNumber: number, inheritedDivisions: number): Measure {
   const attrs = children(element, 'attributes')[0]
   const time = attrs?.querySelector('time')
   const key = attrs?.querySelector('key')
@@ -28,7 +28,7 @@ function parseMeasure(element: Element, fallbackNumber: number): Measure {
   const measure: Measure = {
     number: element.getAttribute('number') || String(fallbackNumber),
     events: [],
-    ...(attrs && number(attrs, 'divisions') > 0 ? { divisions: number(attrs, 'divisions') } : {}),
+    divisions: attrs && number(attrs, 'divisions') > 0 ? number(attrs, 'divisions') : inheritedDivisions,
     ...(time ? { time: { beats: number(time, 'beats', 4), beatType: number(time, 'beat-type', 4) } } : {}),
     ...(key ? { key: { fifths: number(key, 'fifths'), mode: text(key, 'mode') || undefined } } : {}),
     ...(clef ? { clef: { sign: text(clef, 'sign', 'G'), line: number(clef, 'line', 2), octaveChange: number(clef, 'clef-octave-change') || undefined } } : {}),
@@ -73,11 +73,14 @@ export function parseMusicXml(source: string): ParseSummary {
   }
   const parts: ScorePart[] = Array.from(root.querySelectorAll(':scope > part')).map((part, index) => {
     const id = part.getAttribute('id') || `part-${index + 1}`
-    return {
-      id,
-      name: partNames.get(id) || id,
-      measures: children(part, 'measure').map((measure, measureIndex) => parseMeasure(measure, measureIndex + 1)),
-    }
+    let inheritedDivisions = 1
+    const measures = children(part, 'measure').map((measure, measureIndex) => {
+      const attributes = children(measure, 'attributes')[0]
+      const declaredDivisions = attributes ? number(attributes, 'divisions') : 0
+      if (declaredDivisions > 0) inheritedDivisions = declaredDivisions
+      return parseMeasure(measure, measureIndex + 1, inheritedDivisions)
+    })
+    return { id, name: partNames.get(id) || id, measures }
   })
   const events = parts.flatMap(part => part.measures.flatMap(measure => measure.events))
   const title = text(xml, 'work-title') || text(xml, 'movement-title') || 'Tác phẩm chưa đặt tên'
