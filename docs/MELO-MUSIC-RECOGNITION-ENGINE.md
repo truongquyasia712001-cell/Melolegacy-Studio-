@@ -2,39 +2,36 @@
 
 ## Trạng thái triển khai
 
-Nhánh `feature/melo-music-recognition-engine` sử dụng ứng dụng React + TypeScript + Vite có sẵn làm nền, không tạo dự án frontend trùng lặp. Mọi thay đổi vẫn nằm trên nhánh tính năng; `main` không bị sửa.
+Nhánh `feature/melo-music-recognition-engine` tiếp tục dùng React + TypeScript + Vite hiện có. Không tạo frontend trùng lặp; không sửa `main` hoặc Melobox.
 
-### Đã triển khai trong Music Data Engine
+### Đã có từ các bước trước
 
-- Mô hình dữ liệu chuẩn hóa phiên bản `1.0`: Score, Part, Measure, Event, Pitch.
-- MusicXML `score-partwise`: đọc bè, ô nhịp, nốt, dấu lặng, cao độ, alter, octave, duration, voice, staff, tie, articulation và một phần thuộc tính key/time/clef.
-- MIDI Standard MIDI Files: đọc header, track chunks, variable-length quantities, running status, note-on/note-off, velocity, tên track, tempo, time signature và key signature; ghép nốt theo channel + pitch, chia dữ liệu thành ô nhịp theo nhịp chỉ định và tách sự kiện kéo dài qua vạch nhịp.
-- Hai bộ phân tích trả cùng một `ParseSummary` và cùng cấu trúc `Score`.
-- Giao diện đã kết nối parser thực cho MusicXML/MIDI; ảnh/PDF/audio/YouTube vẫn chưa được nhận dạng nội dung.\n- Bộ dựng khuông nhạc SVG thử nghiệm hiển thị khóa, nốt, dấu hóa, hóa biểu theo vòng quãng năm, số chỉ nhịp, dấu lặng theo trường độ cơ bản, dấu chấm, dấu nối và vạch nhịp.
+- Music Data Model phiên bản 1.0: Score, Part, Measure, Event, Pitch.
+- Parser MusicXML score-partwise và MIDI Standard MIDI Files.
+- SVG staff preview và MELO Piano Engine prototype (âm thanh piano-like tổng hợp, chưa phải grand piano thu âm).
 
-## Giới hạn kỹ thuật hiện tại
+### Bổ sung trong giai đoạn nhận dạng
 
-- MusicXML `score-timewise` được nhận diện nhưng chưa chuyển đổi; cần xuất `score-partwise`.
-- Các thuộc tính MusicXML thay đổi theo từng ô nhịp; mô hình hiện lưu thuộc tính ở cấp ô nhịp nhưng chưa hỗ trợ đầy đủ mọi notation, tuplet, grace note, direction, lyric, multi-staff mapping và layout.
-- MIDI hiện quy đổi onset/duration theo PPQ, ghép note event và lưu metadata cơ bản. Chưa có quantization, voice separation, sustain pedal, controller automation, tempo map theo thời gian, nhiều tempo segment, hay chuyển thành notation engraving-ready. Tên nốt enharmonic đang dùng cách viết đơn giản.
-- MIDI format 2 được giữ track riêng và có cảnh báo; cách biểu diễn sequence độc lập sẽ được hoàn thiện.
-- Bộ dựng khuông nhạc hiện là preview, chưa phải Music Editor có thể chỉnh sửa; chưa có playback engine hoặc export MusicXML từ model. Cách viết dấu lặng và trường độ vẫn là quy ước hiển thị gần đúng, chưa thay thế bộ engraving chuyên dụng.
+- API sidecar FastAPI: `services/music-recognition/api.py`.
+- OMR: tích hợp CLI Score-OMR/score-reader, nhận PDF/PNG/JPG/WEBP/TIFF và trả MusicXML cùng MIDI (nếu engine tạo được).
+- Audio-to-MIDI: tích hợp CLI Spotify Basic Pitch, nhận WAV/MP3/M4A/OGG/FLAC và trả MIDI.
+- Frontend gọi API, chuyển MusicXML/MIDI vào parser và Music Data Model hiện có, hiển thị preview, phát thử bằng piano engine và tải kết quả.
+- Upload tạm thời, giới hạn 50 MB, whitelist phần mở rộng, timeout và tự xóa thư mục tạm sau request.
 
-## Kiểm thử và nghiệm thu
+## Cài đặt
 
-Cần chạy `npm ci`, `npm run build`, `npm run lint` trong môi trường Node tương thích (Vite yêu cầu Node `^20.19.0 || >=22.12.0`). Cần bổ sung fixture MusicXML/MIDI được phép sử dụng và kiểm thử tự động trước khi coi parser là production-ready. Không đánh dấu build/test là đạt khi chưa thực thi.
+Xem `services/music-recognition/README.md`. Yêu cầu Python 3.10/3.11 và Java 17+ cho OMR; cài dependencies từ requirements rồi chạy FastAPI trên port 8000. Trong Vite dev server, `/api` được proxy sang sidecar.
 
-## Lộ trình kế tiếp
+## Giới hạn và điều kiện nghiệm thu
 
-1. Bổ sung fixture và unit tests cho MusicXML/MIDI, sửa các trường hợp sai sau khi chạy build.
-2. Tạo màn hình xem dữ liệu nốt/ô nhịp từ Score model.
-3. Xây renderer khuông nhạc và playback piano tối thiểu.
-4. Nghiên cứu pipeline OMR ảnh/PDF mã nguồn mở.
-5. Mở rộng audio transcription và handwriting sau khi có cơ sở dữ liệu/đánh giá phù hợp.
+- Đây là tích hợp engine qua API, không phải OMR chạy trực tiếp trên iPad Safari. Cần một máy chạy sidecar hoặc server riêng có cài Java/Python/model.
+- Audio-to-MIDI dùng Basic Pitch baseline; xử lý polyphonic được nhưng tốt nhất với một nhạc cụ nổi trội. Piano nhiều bè cần rà soát và chỉnh sửa.
+- Bản OMR/audio chưa được chạy nghiệm thu trong môi trường này; cần cài runtime, tải model, chạy fixtures, kiểm tra MusicXML và MIDI đầu ra trước khi dùng công việc chính thức.
+- API chưa có xác thực, quota, job queue hay hardening production. Không public endpoint trực tiếp trước khi bổ sung các lớp này.
+- Chưa có Music Editor đầy đủ, sửa bản nhạc trực tiếp hoặc lưu trữ legacy; các kết quả hiện được xem trước và tải xuống.
 
-## MELO Piano Engine (prototype)
+## Bảo mật và giấy phép
 
-- MusicXML/MIDI scores are rendered through the shared Score model and can now be played in-browser with Web Audio.
-- The first sound generator is an additive, multi-partial piano-like synthesis voice with velocity response, attack/decay/release shaping, low-pass damping, tempo control, volume, pause, resume and stop.
-- This is a functional prototype for transport and sound design. It is not a sampled acoustic grand piano and must not be described as one. The next sound-quality milestone is a legally redistributable multisample piano bank with velocity layers, pedal/sustain behavior, stereo recording and per-note release samples.
-- Audio-file pitch transcription is still not implemented. The current audio import only receives the file and reports its pending recognition state.
+- Score-OMR / score-reader: Apache-2.0 theo upstream; giữ lại thông báo giấy phép khi phân phối.
+- Spotify Basic Pitch: Apache-2.0; giữ lại LICENSE/NOTICE khi phân phối.
+- Tệp tải lên được xử lý trong thư mục tạm cục bộ và xóa sau khi request kết thúc. Không gửi file đến dịch vụ bên thứ ba từ frontend.
