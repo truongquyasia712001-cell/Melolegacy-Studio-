@@ -1,54 +1,26 @@
-# MELO Music Recognition Sidecar
+# MELO Music Recognition — chuyển sang xử lý trực tiếp trên iPad
 
-Bộ xử lý cục bộ cho hai tác vụ: ảnh/PDF bản nhạc → MusicXML/MIDI và âm thanh → MIDI. Frontend PWA gọi API này; tệp được xử lý trong thư mục tạm và tự xóa sau mỗi yêu cầu.
+Mục tiêu sản phẩm là nhận dạng ảnh/PDF bản nhạc ngay trong PWA trên iPad, không yêu cầu người dùng cài Python, chạy máy tính hoặc thuê máy chủ. Tệp nguồn được xử lý cục bộ theo mặc định.
 
-## 1. Yêu cầu
+## Hướng triển khai
 
-- Python 3.10 hoặc 3.11.
-- Java 17+ trong PATH (Score-OMR cần Java decoder).
-- Máy có RAM/CPU đủ để chạy mô hình nhận dạng.
-- Node/Vite chỉ cần cho frontend; không bắt buộc trên máy chạy API.
+1. Ảnh/PDF → MusicXML bằng OMR chạy trong trình duyệt (WebAssembly/ONNX Runtime Web hoặc engine tương thích sau khi kiểm tra giấy phép).
+2. Audio → MIDI bằng mô hình đa cao độ chạy trong trình duyệt.
+3. Kết quả được đưa qua Music Data Model/parser hiện có, xem trước, nghe thử và chỉnh sửa.
+4. Melobox sẽ là nhà cung cấp lưu trữ mở rộng trong tương lai thông qua Storage Adapter độc lập; Melo Legacy vẫn hoạt động khi chưa kết nối.
 
-## 2. Cài đặt và chạy
+## Sidecar Python hiện tại
 
-Từ thư mục gốc repository:
+FastAPI sidecar trong thư mục này là tích hợp thử nghiệm cũ để đánh giá Score-OMR và Basic Pitch. Đây **không phải yêu cầu cài đặt cho người dùng cuối** và không phải kiến trúc đích của ứng dụng iPad. Chưa có kiểm thử xác nhận chất lượng đầu ra end-to-end.
 
-```bash
-python -m venv .venv
-# macOS/Linux
-source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
+Nếu nhà phát triển muốn thử sidecar trên máy phát triển, có thể tham khảo lịch sử triển khai và API trong mã nguồn; không public endpoint ra Internet nếu chưa có xác thực, quota và hardening bảo mật.
 
-python -m pip install -r services/music-recognition/requirements.txt
-cd services/music-recognition
-uvicorn api:app --host 0.0.0.0 --port 8000
-```
+## Yêu cầu trước khi chọn engine chạy trên iPad
 
-Kiểm tra `http://localhost:8000/api/health`. Kết quả mong đợi có `omr_installed: true` và `audio_installed: true`.
+- Xác minh giấy phép mã nguồn, model weights và runtime.
+- Kiểm tra tương thích Safari/iPadOS và kích thước model.
+- Chạy trong Web Worker, xử lý PDF theo từng trang và giải phóng bộ nhớ.
+- Đo thời gian, RAM và độ chính xác trên iPad thật.
+- Không đưa engine vào ứng dụng phân phối khi chưa rõ nghĩa vụ giấy phép.
 
-## 3. Kết nối PWA
-
-Trong môi trường phát triển, Vite proxy `/api` sang `http://localhost:8000`. Khi triển khai, cấu hình reverse proxy cùng origin hoặc đặt biến `VITE_MUSIC_RECOGNITION_API` thành URL API HTTPS. Cấu hình `MELO_ALLOWED_ORIGINS` bằng danh sách origin được phép, phân tách dấu phẩy.
-
-Ví dụ:
-
-```bash
-MELO_ALLOWED_ORIGINS=https://studio.example.org uvicorn api:app --host 0.0.0.0 --port 8000
-```
-
-Không mở API này trực tiếp ra Internet nếu chưa bổ sung xác thực, giới hạn tốc độ, quota và chính sách lưu trữ phù hợp. Bản hiện tại giới hạn tệp 50 MB, chỉ nhận phần mở rộng cho phép, timeout engine và xóa tệp tạm sau request.
-
-## 4. API
-
-- `GET /api/health`: kiểm tra trạng thái engine.
-- `POST /api/recognize/omr`: multipart field `file`, nhận PDF/PNG/JPG/WEBP/TIFF; trả MusicXML và MIDI base64 nếu engine tạo được.
-- `POST /api/recognize/audio`: multipart field `file`, nhận WAV/MP3/M4A/OGG/FLAC; trả MIDI base64.
-
-OMR chạy bằng `score-reader` (Score-OMR, Apache-2.0). Audio chạy bằng `basic-pitch` (Spotify Basic Pitch, Apache-2.0). Tuân thủ LICENSE/NOTICE của các dependency khi phân phối.
-
-## 5. Chất lượng và giới hạn
-
-- OMR có thể sai với ảnh mờ, nghiêng, bản viết tay, ký hiệu hiếm, nhiều khuông hoặc bản scan chất lượng thấp. Luôn xem lại MusicXML trước khi dùng chính thức.
-- Basic Pitch là mô hình đa cao độ tổng quát; bản thu piano nhiều bè có thể bị gộp/nhầm nốt, sustain và âm vang. Kết quả cần bước biên tập MIDI.
-- API hiện trả MusicXML/MIDI thô; chưa tự động khẳng định độ chính xác hoặc tự ghi vào thư viện người dùng.
-- Chưa có xác thực tài khoản, job queue, tiến trình phần trăm, GPU scheduling hay triển khai production.
+Chi tiết kiến trúc, lộ trình nghiệm thu và quy tắc kết nối Melobox: docs/MELO-MUSIC-RECOGNITION-ENGINE.md.
