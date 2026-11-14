@@ -1,9 +1,9 @@
 import type { Measure, ParseSummary, Score, ScoreEvent, ScorePart } from './model'
-import { pitchToMidi } from './model'
 
 class MidiReader {
   offset = 0
-  constructor(readonly bytes: Uint8Array) {}
+  readonly bytes: Uint8Array
+  constructor(bytes: Uint8Array) { this.bytes = bytes }
   ensure(size: number) {
     if (this.offset + size > this.bytes.length) throw new Error('Dữ liệu MIDI bị cắt hoặc thiếu.')
   }
