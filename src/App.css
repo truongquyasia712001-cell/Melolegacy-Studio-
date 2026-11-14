@@ -36,3 +36,16 @@
 .library-item button.library-delete{color:#98635a}
 .library-note{font-size:10px;line-height:1.65;color:var(--muted);margin:10px 0 0}
 @media(max-width:650px){.library-intro{align-items:stretch;flex-direction:column}.library-add{width:100%;min-height:42px}.library-storage{gap:13px;flex-wrap:wrap}.library-storage>div{min-width:calc(50% - 10px)}.library-storage button{margin-left:0}.library-item{gap:7px;padding:10px 8px}.library-item button{padding:7px 8px}.library-file-info span{font-size:8px}}
+
+.saved-scores{margin-top:13px;border:1px solid var(--line);background:#fffdf9}
+.saved-scores-heading{display:flex;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.saved-scores-heading b{font:14px Georgia,serif;color:var(--ink)}
+.saved-scores-heading span,.saved-scores-empty{font-size:10px;color:var(--muted)}
+.saved-scores-empty{padding:14px;margin:0}
+.saved-score-item{display:flex;align-items:center;gap:9px;padding:10px 13px;border-top:1px solid #eee9df}
+.saved-score-item:first-of-type{border-top:0}
+.saved-score-item>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.saved-score-item b{font:13px Georgia,serif;color:var(--ink);overflow-wrap:anywhere}
+.saved-score-item span{font-size:9px;color:var(--muted)}
+.saved-score-item button{border:1px solid var(--line);background:white;color:var(--gold-dark);padding:7px 9px;font-size:10px;cursor:pointer}
+@media(max-width:650px){.saved-score-item{flex-wrap:wrap}.saved-score-item>div{flex-basis:100%}.saved-score-item button{flex:1}}
