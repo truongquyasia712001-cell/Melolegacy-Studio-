@@ -3,6 +3,8 @@ import { parseMidi, parseMusicXml } from './music'
 import type { ParseSummary, Score } from './music'
 import { ScoreStaffPreview } from './music/ScoreStaffPreview'
 import { PianoPlayback } from './music/PianoPlayback'
+import { LocalLibrary } from './music/LocalLibrary'
+import { saveLocalAsset, saveLocalScore } from './music/localStore'
 import { decodeMidiBase64, recognizeAudioFile, recognizeScoreFile } from './music/recognitionApi'
 import './App.css'
 
@@ -42,12 +44,19 @@ export default function App() {
   async function selectFile(file: File, kind: Kind) {
     setBusy(true); setError(''); setResult(null)
     try {
-      if (kind === 'musicxml') setResult(toResult(parseMusicXml(await file.text())))
+      await saveLocalAsset({ ownerId: 'device-local', title: file.name, kind: kind === 'musicxml' ? 'musicxml' : kind, mimeType: file.type || 'application/octet-stream', blob: file })
+      if (kind === 'musicxml') {
+        const parsed = parseMusicXml(await file.text())
+        await saveLocalScore({ id: crypto.randomUUID(), ownerId: 'device-local', title: parsed.score.title || file.name, musicxml: await file.text() })
+        setResult(toResult(parsed))
+      }
       else if (kind === 'midi') setResult(toResult(parseMidi(await file.arrayBuffer())))
       else if (kind === 'image' || kind === 'pdf') {
         const response = await recognizeScoreFile(file)
         if (!response.musicxml) throw new Error('Engine OMR chưa trả về MusicXML.')
         const parsed = parseMusicXml(response.musicxml)
+        await saveLocalAsset({ ownerId: 'device-local', title: parsed.score.title ? parsed.score.title + '.musicxml' : 'MeloLegacy-Recognized.musicxml', kind: 'musicxml', mimeType: 'application/vnd.recordare.musicxml+xml', blob: new Blob([response.musicxml], { type: 'application/vnd.recordare.musicxml+xml' }) })
+        await saveLocalScore({ id: crypto.randomUUID(), ownerId: 'device-local', title: parsed.score.title || file.name, musicxml: response.musicxml })
         setResult({
           ...toResult(parsed),
           title: parsed.score.title || file.name,
@@ -60,6 +69,7 @@ export default function App() {
         const response = await recognizeAudioFile(file)
         if (!response.midi_base64) throw new Error('Engine audio chưa trả về MIDI.')
         const parsed = parseMidi(decodeMidiBase64(response.midi_base64))
+        await saveLocalAsset({ ownerId: 'device-local', title: file.name.replace(/\\.[^.]+$/, '') + '-recognized.mid', kind: 'midi', mimeType: 'audio/midi', blob: new Blob([decodeMidiBase64(response.midi_base64)], { type: 'audio/midi' }) })
         setResult({
           ...toResult(parsed),
           title: file.name,
@@ -82,7 +92,7 @@ export default function App() {
   return <main className="shell">
     <header className="topbar"><a className="brand" href="/"><span className="seal">M</span><span><b>MELO LEGACY</b><small>STUDIO</small></span></a><span className="lab-status"><i /> MUSIC RECOGNITION LAB</span></header>
     <section className="hero"><div className="eyebrow">MELO AI · MUSIC RECOGNITION ENGINE</div><h1>Đưa bản nhạc của bạn<br /><em>vào không gian sáng tạo.</em></h1><p>Nhập bản nhạc từ nhiều nguồn. Đọc, phân tích và chuẩn bị dữ liệu để mở trực tiếp trong Music Editor.</p></section>
-    <section className="section"><div className="section-head"><div><span>01</span><h2>Chọn nguồn âm nhạc</h2></div><small>IMPORT & RECOGNIZE</small></div>
+    <LocalLibrary />\n    <section className="section"><div className="section-head"><div><span>01</span><h2>Chọn nguồn âm nhạc</h2></div><small>IMPORT & RECOGNIZE</small></div>
       <div className="source-grid">{sources.map(s => <button className="source-card" key={s.kind} disabled={busy} onClick={() => refs.current[s.kind]?.click()}>
         <span className="source-icon">{s.icon}</span><b>{s.title}</b><small>{s.detail}</small><span className="choose">Chọn tệp <i>↗</i></span>
         <input ref={el => { refs.current[s.kind] = el }} hidden type="file" accept={s.accept} onChange={e => { const file = e.target.files?.[0]; if (file) void selectFile(file, s.kind); e.currentTarget.value = '' }} />
