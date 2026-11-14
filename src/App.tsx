@@ -5,6 +5,7 @@ import { ScoreStaffPreview } from './music/ScoreStaffPreview'
 import { PianoPlayback } from './music/PianoPlayback'
 import { LocalLibrary } from './music/LocalLibrary'
 import { saveLocalAsset, saveLocalScore } from './music/localStore'
+import type { LocalScoreDocument } from './music/localStore'
 import { decodeMidiBase64, recognizeAudioFile, recognizeScoreFile } from './music/recognitionApi'
 import './App.css'
 
@@ -83,6 +84,15 @@ export default function App() {
     } finally { setBusy(false) }
   }
 
+  function openSavedScore(saved: LocalScoreDocument) {
+    try {
+      const parsed = parseMusicXml(saved.musicxml)
+      setResult({ ...toResult(parsed), title: saved.title, note: 'Đã mở bản nhạc từ kho MusicXML cục bộ trên thiết bị.' })
+      setError('')
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Không thể mở bản nhạc đã lưu.')
+    }
+  }
   function checkYoutube() {
     setError(''); setResult(null)
     if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(youtube.trim())) { setError('Đường dẫn YouTube chưa hợp lệ.'); return }
@@ -92,7 +102,7 @@ export default function App() {
   return <main className="shell">
     <header className="topbar"><a className="brand" href="/"><span className="seal">M</span><span><b>MELO LEGACY</b><small>STUDIO</small></span></a><span className="lab-status"><i /> MUSIC RECOGNITION LAB</span></header>
     <section className="hero"><div className="eyebrow">MELO AI · MUSIC RECOGNITION ENGINE</div><h1>Đưa bản nhạc của bạn<br /><em>vào không gian sáng tạo.</em></h1><p>Nhập bản nhạc từ nhiều nguồn. Đọc, phân tích và chuẩn bị dữ liệu để mở trực tiếp trong Music Editor.</p></section>
-    <LocalLibrary />\n    <section className="section"><div className="section-head"><div><span>01</span><h2>Chọn nguồn âm nhạc</h2></div><small>IMPORT & RECOGNIZE</small></div>
+    <LocalLibrary onOpenScore={openSavedScore} />\n    <section className="section"><div className="section-head"><div><span>01</span><h2>Chọn nguồn âm nhạc</h2></div><small>IMPORT & RECOGNIZE</small></div>
       <div className="source-grid">{sources.map(s => <button className="source-card" key={s.kind} disabled={busy} onClick={() => refs.current[s.kind]?.click()}>
         <span className="source-icon">{s.icon}</span><b>{s.title}</b><small>{s.detail}</small><span className="choose">Chọn tệp <i>↗</i></span>
         <input ref={el => { refs.current[s.kind] = el }} hidden type="file" accept={s.accept} onChange={e => { const file = e.target.files?.[0]; if (file) void selectFile(file, s.kind); e.currentTarget.value = '' }} />
