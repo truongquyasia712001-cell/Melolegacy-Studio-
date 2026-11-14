@@ -60,7 +60,11 @@ export function LocalLibrary() {
     }
   }, [])
 
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    void refresh()
+    window.addEventListener('melo-library-updated', refresh)
+    return () => window.removeEventListener('melo-library-updated', refresh)
+  }, [refresh])
 
   async function importFiles(files: FileList | null) {
     if (!files?.length) return
