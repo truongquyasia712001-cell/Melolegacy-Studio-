@@ -100,7 +100,7 @@ export default function App() {
       <div className="youtube"><span className="play">▶</span><div className="youtube-label"><b>Nguồn YouTube</b><small>Chỉ phân tích nội dung có quyền truy cập hợp lệ.</small></div><div className="youtube-form"><input value={youtube} onChange={e => setYoutube(e.target.value)} placeholder="Dán đường dẫn YouTube..." aria-label="Đường dẫn YouTube" /><button disabled={!youtube.trim()} onClick={checkYoutube}>Kiểm tra</button></div></div>
     </section>
     {(result || error || busy) && <section className="section result"><div className="section-head"><div><span>02</span><h2>Kết quả nhận dạng</h2></div>{result && <small className={result.status === 'read' ? 'tag ready' : 'tag pending'}>{result.status === 'read' ? 'ĐÃ ĐỌC DỮ LIỆU' : 'CHỜ XỬ LÝ'}</small>}</div>
-      {busy && <p className="message">Đang gửi tệp đến bộ nhận dạng cục bộ. Tệp được xử lý trong phiên tạm...</p>}{error && <p className="error">{error}</p>}
+      {busy && <p className="message">Đang gửi tệp đến bộ xử lý nhận dạng đã cấu hình. Bản gốc đã được lưu trong thư viện thiết bị...</p>}{error && <p className="error">{error}</p>}
       {result && <article className="result-card"><h3>{result.title}</h3><ul>{result.lines.map((line, index) => <li key={index}>{line}</li>)}</ul>
         <div className="recognition-exports">
           {result.exportText && <button onClick={() => downloadText('MeloLegacy-Recognized.musicxml', result.exportText!, 'application/vnd.recordare.musicxml+xml')}>Tải MusicXML</button>}
@@ -119,7 +119,7 @@ export default function App() {
     </section>}
     <section className="section"><div className="section-head"><div><span>03</span><h2>Đường đi đến Music Editor</h2></div></div><div className="flow">
       <div><small>01</small><b>Ảnh / PDF / Audio</b><span>OMR · Audio-to-MIDI</span></div><i>→</i><div><small>02</small><b>Nhận dạng & chuẩn hóa</b><span>Music Data Engine</span></div><i>→</i><div><small>03</small><b>Music Editor</b><span>Đọc · Sửa · Phát · Lưu</span></div>
-    </div><p className="footnote">OMR và audio-to-MIDI đã có API xử lý cục bộ. Cần cài và khởi chạy dịch vụ nhận dạng theo hướng dẫn trong services/music-recognition/README.md. Music Editor chỉnh sửa đầy đủ sẽ được phát triển tiếp trên cùng Music Data Model.</p></section>
+    </div><p className="footnote">Thư viện thiết bị và khung PWA ngoại tuyến đã được bổ sung. Engine OMR và audio-to-MIDI chạy trực tiếp trong trình duyệt iPad chưa hoàn tất; dịch vụ sidecar cũ chỉ dành cho thử nghiệm phát triển, không phải yêu cầu cài đặt cho giáo viên hoặc học sinh. Music Editor chỉnh sửa đầy đủ sẽ tiếp tục phát triển trên cùng Music Data Model.</p></section>
     <footer><span>MELO LEGACY STUDIO</span><span>MEMENTO OF MUSIC, LEGACY OF LEARNING</span></footer>
   </main>
 }
