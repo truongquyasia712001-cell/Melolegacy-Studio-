@@ -4,11 +4,13 @@ import {
   formatStorageBytes,
   getLocalStorageUsage,
   listLocalAssets,
+  listLocalScores,
   requestPersistentLocalStorage,
   saveLocalAsset,
   type LocalMusicAsset,
   type LocalAssetKind,
   type LocalStorageUsage,
+  type LocalScoreDocument,
 } from './localStore'
 
 const OWNER_ID = 'device-local'
@@ -37,9 +39,10 @@ function dateLabel(timestamp: number) {
   return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' }).format(timestamp)
 }
 
-export function LocalLibrary() {
+export function LocalLibrary({ onOpenScore }: { onOpenScore: (score: LocalScoreDocument) => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [assets, setAssets] = useState<LocalMusicAsset[]>([])
+  const [scores, setScores] = useState<LocalScoreDocument[]>([])
   const [usage, setUsage] = useState<LocalStorageUsage | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -49,8 +52,9 @@ export function LocalLibrary() {
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const [items, estimate] = await Promise.all([listLocalAssets(OWNER_ID), getLocalStorageUsage()])
+      const [items, savedScores, estimate] = await Promise.all([listLocalAssets(OWNER_ID), listLocalScores(OWNER_ID), getLocalStorageUsage()])
       setAssets(items)
+      setScores(savedScores)
       setUsage(estimate)
       setError('')
     } catch (reason) {
@@ -138,6 +142,21 @@ export function LocalLibrary() {
         <div className="library-file-info"><b>{asset.title}</b><span>{asset.kind.toUpperCase()} · {formatStorageBytes(asset.size)} · Lưu {dateLabel(asset.createdAt)}</span></div>
         <button type="button" onClick={() => saveBlobToDevice(asset)} aria-label={`Tải ${asset.title} xuống`}>Tải xuống</button>
         <button type="button" className="library-delete" onClick={() => void removeAsset(asset)} aria-label={`Xóa ${asset.title}`}>Xóa</button>
+      </article>)}
+    </div>
+    <div className="saved-scores">
+      <div className="saved-scores-heading"><b>Bản nhạc đã chuẩn hóa</b><span>{scores.length} tài liệu MusicXML</span></div>
+      {scores.length === 0 ? <p className="saved-scores-empty">Chưa có tài liệu MusicXML được lưu để mở lại trong Studio.</p> : scores.map(score => <article className="saved-score-item" key={score.id}>
+        <div><b>{score.title}</b><span>Cập nhật {dateLabel(score.updatedAt)}</span></div>
+        <button type="button" onClick={() => onOpenScore(score)}>Mở bản nhạc</button>
+        <button type="button" onClick={() => {
+          const url = URL.createObjectURL(new Blob([score.musicxml], { type: 'application/vnd.recordare.musicxml+xml' }))
+          const anchor = document.createElement('a')
+          anchor.href = url
+          anchor.download = score.title.replace(/[^a-z0-9._-]+/gi, '-').replace(/-+/g, '-') + '.musicxml'
+          anchor.click()
+          window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+        }}>Xuất XML</button>
       </article>)}
     </div>
     <p className="library-note">Lưu ý: đây là kho cục bộ của trình duyệt trên thiết bị này, chưa phải tài khoản đám mây hay cơ chế phân quyền giáo viên/học sinh. Dữ liệu trình duyệt vẫn có thể bị mất nếu người dùng xóa dữ liệu website hoặc hệ điều hành thu hồi bộ nhớ. Hãy giữ bản sao lưu của các tệp quan trọng.</p>
