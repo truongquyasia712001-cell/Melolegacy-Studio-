@@ -116,6 +116,7 @@ export async function saveLocalAsset(
     status: 'local',
   }
   await withStore(ASSETS, 'readwrite', store => store.put(asset))
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('melo-library-updated'))
   return asset
 }
 
