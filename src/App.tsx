@@ -37,7 +37,7 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 function ActionButton({ name, label, onClick, active = false }: { name: string; label: string; onClick: () => void; active?: boolean }) {
   return <button className={'icon-button' + (active ? ' is-active' : '')} type="button" title={label} aria-label={label} onClick={onClick}><Icon name={name} /></button>
 }
-function StaffSystem({ row, page, first, measures, onMeasure, onAdd }: { row: number; page: number; first: boolean; measures: Measure[]; onMeasure: (id: number) => void; onAdd: () => void }) {
+function StaffSystem({ row, page, first, last, measures, onMeasure, onAdd }: { row: number; page: number; first: boolean; last: boolean; measures: Measure[]; onMeasure: (id: number) => void; onAdd: () => void }) {
   const firstMeasure = measures[0]?.id || row * 5 + 1
   return <div className="staff-system">
     <span className="measure-index">{firstMeasure}</span>
@@ -47,17 +47,17 @@ function StaffSystem({ row, page, first, measures, onMeasure, onAdd }: { row: nu
       {measures.map((measure, index) => <button className="measure-cell" key={measure.id} type="button" onClick={() => onMeasure(measure.id)} aria-label={'Ô nhịp ' + measure.id}>
         <span className="staff-lines"><i/><i/><i/><i/><i/></span>
         {measure.notes.map((note, i) => <span className="note-dot" key={i} style={{ left: (22 + i * 13) + '%', top: (48 - note * 5) + '%' }} />)}
-        {index === measures.length - 1 && row === 0 && page === 1 && <span className="measure-end-mark" />}
+        {index === measures.length - 1 && last && <span className="measure-end-mark" />}
       </button>)}
-      {row === 0 && page === 1 && <button className="add-measure" type="button" title="Thêm ô nhịp" aria-label="Thêm ô nhịp" onClick={onAdd}><Icon name="plus"/></button>}
+      {last && <button className="add-measure" type="button" title="Thêm ô nhịp" aria-label="Thêm ô nhịp" onClick={onAdd}><Icon name="plus"/></button>}
     </div>
   </div>
 }
-function ScorePage({ page, measures, onMeasure, onAdd }: { page: number; measures: Measure[]; onMeasure: (id: number) => void; onAdd: () => void }) {
+function ScorePage({ page, totalPages, measures, onMeasure, onAdd }: { page: number; totalPages: number; measures: Measure[]; onMeasure: (id: number) => void; onAdd: () => void }) {
   return <article className="a4-sheet">
     <span className="sheet-page-number">{page}</span>
     <div className="sheet-systems">
-      {Array.from({ length: 12 }, (_, row) => <StaffSystem key={row} row={row} page={page} first={page === 1 && row === 0} measures={measures.slice(row * 5, row * 5 + 5)} onMeasure={onMeasure} onAdd={onAdd}/>)}
+      {Array.from({ length: 12 }, (_, row) => <StaffSystem key={row} row={row} page={page} first={page === 1 && row === 0} last={page === totalPages && row === 11} measures={measures.slice(row * 5, row * 5 + 5)} onMeasure={onMeasure} onAdd={onAdd}/>)}
     </div>
   </article>
 }
@@ -73,10 +73,10 @@ export default function App() {
   const [selectedMeasures, setSelectedMeasures] = useState<number[]>([])
   const [clipboard, setClipboard] = useState<Measure[]>([])
   const [insertMode, setInsertMode] = useState<'replace' | 'insert'>('insert')
-  const [pages, setPages] = useState(1)
   const [activeMeasure, setActiveMeasure] = useState(1)
   const uploadRef = useRef<HTMLInputElement>(null)
   const scoreRef = useRef<HTMLDivElement>(null)
+  const pages = Math.max(1, Math.ceil(measures.length / 60))
   const toolLabel = useMemo(() => ({ pen: 'Bút', text: 'Chữ', select: 'Chọn vùng', piano: 'Piano' }[activeTool]), [activeTool])
   function openSavedScore(saved: LocalScoreDocument) {
     try { setScore(parseMusicXml(saved.musicxml).score); setNotice('Đã mở ' + saved.title); setLibraryOpen(false) }
@@ -155,7 +155,7 @@ export default function App() {
       <section className="paper-stage">
         <div className="stage-controls"><div className="stage-caption">MELO LEGACY <span>·</span> SCORE STUDIO</div><div className="zoom-tools"><ActionButton name="zoomOut" label="Thu nhỏ" onClick={() => setZoom(v => Math.max(55,v-5))}/><span>{zoom}%</span><ActionButton name="zoomIn" label="Phóng to" onClick={() => setZoom(v => Math.min(120,v+5))}/></div></div>
         <div className="paper-scroll" ref={scoreRef} style={{ '--paper-zoom': zoom / 100 } as CSSProperties}>
-          {Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
+          {Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
         </div>
         {notice && <div className="status-toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng"><Icon name="close"/></button></div>}
         {score && <div className="loaded-score"><b>{score.title || 'Bản nhạc đã mở'}</b><span>{score.parts.length} bè · MusicXML</span><PianoPlayback score={score}/></div>}
