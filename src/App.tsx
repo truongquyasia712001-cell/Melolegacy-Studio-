@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { LocalLibrary } from './music/LocalLibrary'
 import type { LocalScoreDocument } from './music/localStore'
 import { parseMusicXml } from './music'
@@ -118,7 +118,7 @@ export default function App() {
       {libraryOpen && <aside className="library-drawer"><div className="drawer-heading"><b>Thư viện nhạc</b><button onClick={() => setLibraryOpen(false)} aria-label="Đóng thư viện"><Icon name="close" /></button></div><LocalLibrary onOpenScore={openSavedScore} /></aside>}
       <section className="score-workspace">
         <div className="score-topline"><span>TRÌNH SOẠN NHẠC</span><div className="zoom-control"><button onClick={() => setZoom(value => Math.max(55, value - 5))} aria-label="Thu nhỏ"><Icon name="minus" /></button><span>{zoom}%</span><button onClick={() => setZoom(value => Math.min(120, value + 5))} aria-label="Phóng to"><Icon name="plus" /></button></div></div>
-        <div className="pages-scroll" style={{ ['--page-zoom' as string]: zoom / 100 }}>
+        <div className="pages-scroll" style={{ ['--page-zoom']: zoom / 100 } as CSSProperties}>
           {Array.from({ length: pages }, (_, i) => <ScorePage key={i + 1} page={i + 1} onAddNote={() => setNotice(activeTool === 'pen' ? 'Đã chọn vị trí viết trên khuông. Bộ nhập nốt trực tiếp sẽ được nối vào Music Data Model.' : 'Hãy chọn công cụ Bút để viết nốt.')} />)}
           <button className="add-page" onClick={addPage}><Icon name="plus" /> Thêm trang nhạc</button>
         </div>
