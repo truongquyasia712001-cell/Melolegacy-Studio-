@@ -364,6 +364,25 @@ Mỗi mẫu cần có:
 
 Sau nhóm cơ bản, mở rộng dấu thăng/giáng/bình, chấm dôi, nối, luyến, khóa, số chỉ nhịp và nhóm ký hiệu phức tạp.
 
+
+### 8.5.1 Bộ luyện viết theo từng loại ký hiệu
+
+Mỗi loại ký hiệu có 10 ô luyện viết ban đầu riêng biệt; không chia 10 mẫu cho toàn bộ thư viện. Danh mục khởi đầu bao gồm:
+- Nốt: tròn, trắng, đen, các dạng chấm dôi, móc đơn, móc kép và biến thể.
+- Dấu lặng: từng loại trường độ tương ứng.
+- Dấu hóa: thăng, giáng, bình.
+- Dấu diễn tấu: nối, luyến, staccato, tenuto, accent, marcato.
+- Cường độ: ppp, pp, p, mp, mf, f, ff, fff.
+- Biến đổi cường độ và dấu khác: crescendo, diminuendo, fermata, trill, turn; danh mục được mở rộng theo taxonomy.
+
+Mỗi ô lưu vector stroke cá nhân, loại ký hiệu, vị trí mẫu và thời điểm tạo. Người dùng có thể xóa nét trước khi lưu. Dữ liệu luyện ban đầu thuộc Kho A cá nhân.
+
+### 8.5.2 Bổ sung 20 mẫu trong quá trình sáng tác
+
+Mục tiêu tham chiếu là 30 mẫu cho từng loại: 10 mẫu luyện ban đầu + 20 mẫu được thu thập từ quá trình sáng tác. Khi người dùng chủ động bật chế độ thu mẫu, hệ thống ghi nhận nét viết trên khuông nhạc cùng loại ký hiệu đang chọn, gắn nguồn composer và trạng thái chờ xác nhận. Không tự động coi mẫu mới là nhãn đúng; cần bước review/xác nhận trước khi dùng huấn luyện. Mục tiêu 30 không phải giới hạn tổng số mẫu.
+
+Bản prototype hiện mới lưu dữ liệu stroke và metadata cục bộ; chưa có mô hình nhận dạng, bộ phân loại, kiểm tra confidence hay pipeline huấn luyện AI thực tế. Không được mô tả đây là tính năng nhận dạng đã hoạt động.
+
 ### 8.6 Chất lượng dữ liệu và huấn luyện
 
 - Tách Canonical Set và Validation Set.
