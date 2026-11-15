@@ -1,135 +1,141 @@
 import { useRef, useState } from 'react'
-import { parseMidi, parseMusicXml } from './music'
-import type { ParseSummary, Score } from './music'
-import { ScoreStaffPreview } from './music/ScoreStaffPreview'
-import { PianoPlayback } from './music/PianoPlayback'
 import { LocalLibrary } from './music/LocalLibrary'
-import { saveLocalAsset, saveLocalScore } from './music/localStore'
 import type { LocalScoreDocument } from './music/localStore'
-import { decodeMidiBase64, recognizeAudioFile, recognizeScoreFile } from './music/recognitionApi'
+import { parseMusicXml } from './music'
+import type { Score } from './music'
+import { PianoPlayback } from './music/PianoPlayback'
 import './App.css'
 
-type Kind = 'musicxml' | 'midi' | 'image' | 'pdf' | 'audio'
-type Result = { title: string; status: 'read' | 'pending'; lines: string[]; note: string; score?: Score; exportText?: string; exportMidi?: string }
-const sources: { kind: Kind; title: string; detail: string; icon: string; accept: string }[] = [
-  { kind: 'musicxml', title: 'MusicXML', detail: 'Đọc cấu trúc ký âm', icon: '♫', accept: '.musicxml,.xml' },
-  { kind: 'midi', title: 'MIDI', detail: 'Đọc track và sự kiện nốt', icon: '⌁', accept: '.mid,.midi' },
-  { kind: 'image', title: 'Ảnh bản nhạc', detail: 'PNG, JPG, WEBP · nhận dạng OMR', icon: '▧', accept: 'image/*' },
-  { kind: 'pdf', title: 'PDF bản nhạc', detail: 'PDF scan hoặc PDF xuất từ phần mềm', icon: '▤', accept: '.pdf,application/pdf' },
-  { kind: 'audio', title: 'Âm thanh', detail: 'WAV, MP3, M4A · chuyển thành MIDI', icon: '◖', accept: 'audio/*,.wav,.mp3,.m4a,.flac' },
+type Tool = 'pen' | 'text' | 'select' | 'piano'
+const toolItems: { id: Tool; label: string; glyph: string }[] = [
+  { id: 'pen', label: 'Bút', glyph: '✎' },
+  { id: 'text', label: 'Viết chữ', glyph: 'T' },
+  { id: 'select', label: 'Chọn vùng', glyph: '▧' },
+  { id: 'piano', label: 'Piano', glyph: '▥' },
 ]
-function toResult(parsed: ParseSummary): Result {
-  return { title: parsed.score.title, status: 'read', lines: parsed.lines, note: parsed.note, score: parsed.score }
-}
-function downloadText(name: string, content: string, type: string) {
-  const url = URL.createObjectURL(new Blob([content], { type }))
-  const anchor = document.createElement('a')
-  anchor.href = url; anchor.download = name; anchor.click()
-  URL.revokeObjectURL(url)
-}
-function downloadMidi(name: string, content: string) {
-  const bytes = decodeMidiBase64(content)
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/midi' }))
-  const anchor = document.createElement('a')
-  anchor.href = url; anchor.download = name; anchor.click()
-  URL.revokeObjectURL(url)
-}
-
-export default function App() {
-  const refs = useRef<Record<Kind, HTMLInputElement | null>>({ musicxml: null, midi: null, image: null, pdf: null, audio: null })
-  const [result, setResult] = useState<Result | null>(null)
-  const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [youtube, setYoutube] = useState('')
-
-  async function selectFile(file: File, kind: Kind) {
-    setBusy(true); setError(''); setResult(null)
-    try {
-      await saveLocalAsset({ ownerId: 'device-local', title: file.name, kind: kind === 'musicxml' ? 'musicxml' : kind, mimeType: file.type || 'application/octet-stream', blob: file })
-      if (kind === 'musicxml') {
-        const parsed = parseMusicXml(await file.text())
-        await saveLocalScore({ id: crypto.randomUUID(), ownerId: 'device-local', title: parsed.score.title || file.name, musicxml: await file.text() })
-        setResult(toResult(parsed))
-      }
-      else if (kind === 'midi') setResult(toResult(parseMidi(await file.arrayBuffer())))
-      else if (kind === 'image' || kind === 'pdf') {
-        const response = await recognizeScoreFile(file)
-        if (!response.musicxml) throw new Error('Engine OMR chưa trả về MusicXML.')
-        const parsed = parseMusicXml(response.musicxml)
-        await saveLocalAsset({ ownerId: 'device-local', title: parsed.score.title ? parsed.score.title + '.musicxml' : 'MeloLegacy-Recognized.musicxml', kind: 'musicxml', mimeType: 'application/vnd.recordare.musicxml+xml', blob: new Blob([response.musicxml], { type: 'application/vnd.recordare.musicxml+xml' }) })
-        await saveLocalScore({ id: crypto.randomUUID(), ownerId: 'device-local', title: parsed.score.title || file.name, musicxml: response.musicxml })
-        setResult({
-          ...toResult(parsed),
-          title: parsed.score.title || file.name,
-          lines: [...parsed.lines, 'Bộ nhận dạng: ' + response.engine, 'Nguồn: ' + file.name, ...(response.warnings || [])],
-          note: 'Đã nhận dạng OMR và chuyển kết quả vào Music Data Model. Hãy kiểm tra lại bản nhạc trước khi sử dụng; nhận dạng tự động không bảo đảm đúng tuyệt đối.',
-          exportText: response.musicxml,
-          exportMidi: response.midi_base64 || undefined,
-        })
-      } else {
-        const response = await recognizeAudioFile(file)
-        if (!response.midi_base64) throw new Error('Engine audio chưa trả về MIDI.')
-        const parsed = parseMidi(decodeMidiBase64(response.midi_base64))
-        await saveLocalAsset({ ownerId: 'device-local', title: file.name.replace(/\\.[^.]+$/, '') + '-recognized.mid', kind: 'midi', mimeType: 'audio/midi', blob: new Blob([decodeMidiBase64(response.midi_base64)], { type: 'audio/midi' }) })
-        setResult({
-          ...toResult(parsed),
-          title: file.name,
-          lines: [...parsed.lines, 'Bộ nhận dạng: ' + response.engine, 'Nguồn: ' + file.name, ...(response.warnings || [])],
-          note: 'Đã chuyển âm thanh thành MIDI và nạp vào Music Data Model. Cần nghe lại, chỉnh nốt, trường độ và cách chia bè trước khi xuất bản nhạc chính thức.',
-          exportMidi: response.midi_base64,
-        })
-      }
-    } catch (e) {
-      setError(e instanceof TypeError ? 'Không kết nối được bộ xử lý nhận dạng. Hãy khởi chạy Music Recognition Sidecar theo hướng dẫn services/music-recognition/README.md.' : e instanceof Error ? e.message : 'Không thể xử lý tệp.')
-    } finally { setBusy(false) }
+function Icon({ name }: { name: string }) {
+  const paths: Record<string, string> = {
+    home: 'M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5M9 21v-7h6v7',
+    book: 'M4 4.5A2.5 2.5 0 0 1 6.5 2H20v18H6.5A2.5 2.5 0 0 0 4 22.5z M4 4.5v18 M8 6h8 M8 10h8',
+    upload: 'M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5',
+    share: 'M12 15V3m-5 5 5-5 5 5M5 13v7h14v-7',
+    undo: 'M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-2',
+    redo: 'm15 14 5-5-5-5m5 5H10a6 6 0 0 0 0 12h2',
+    close: 'M5 5l14 14M19 5 5 19',
+    plus: 'M12 5v14M5 12h14',
+    minus: 'M5 12h14',
   }
-
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d={paths[name] || paths.plus} /></svg>
+}
+function StaffLine({ index, first, onAddNote }: { index: number; first: boolean; onAddNote: () => void }) {
+  return <div className="score-system">
+    <div className="measure-number">{index * 5 + 1}</div>
+    <div className="staff-clef-mark">{first ? '𝄞' : '𝄞'}</div>
+    {first && <div className="time-mark">4<br />4</div>}
+    <div className="staff-measures" onClick={onAddNote} role="button" tabIndex={0} aria-label="Thêm nốt vào khuông nhạc">
+      {Array.from({ length: 5 }, (_, i) => <div className="score-measure" key={i}>
+        <div className="five-lines"><i /><i /><i /><i /><i /></div>
+        {i === 0 && index === 0 && <span className="sample-note">●</span>}
+      </div>)}
+    </div>
+  </div>
+}
+function ScorePage({ page, onAddNote }: { page: number; onAddNote: () => void }) {
+  return <article className="a4-page">
+    <div className="page-number">{page}</div>
+    <div className="page-content">
+      {Array.from({ length: 10 }, (_, i) => <StaffLine key={i} index={(page - 1) * 10 + i} first={page === 1 && i === 0} onAddNote={onAddNote} />)}
+    </div>
+    <div className="page-footer">MELO LEGACY</div>
+  </article>
+}
+export default function App() {
+  const [activeTool, setActiveTool] = useState<Tool>('pen')
+  const [libraryOpen, setLibraryOpen] = useState(false)
+  const [pages, setPages] = useState(1)
+  const [zoom, setZoom] = useState(85)
+  const [pianoOpen, setPianoOpen] = useState(false)
+  const [score, setScore] = useState<Score | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [notice, setNotice] = useState('')
+  const uploadRef = useRef<HTMLInputElement>(null)
   function openSavedScore(saved: LocalScoreDocument) {
     try {
       const parsed = parseMusicXml(saved.musicxml)
-      setResult({ ...toResult(parsed), title: saved.title, note: 'Đã mở bản nhạc từ kho MusicXML cục bộ trên thiết bị.' })
-      setError('')
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Không thể mở bản nhạc đã lưu.')
+      setScore(parsed.score)
+      setNotice('Đã mở bản nhạc ' + saved.title)
+      setLibraryOpen(false)
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Không thể mở bản nhạc.')
     }
   }
-  function checkYoutube() {
-    setError(''); setResult(null)
-    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(youtube.trim())) { setError('Đường dẫn YouTube chưa hợp lệ.'); return }
-    setResult({ title: 'Nguồn YouTube', status: 'pending', lines: [youtube.trim()], note: 'Đã kiểm tra định dạng URL. Chưa truy cập hay tải video. Phân tích chỉ thực hiện khi có quyền truy cập và phương thức sử dụng hợp lệ.' })
+  async function importScore(file?: File) {
+    if (!file) return
+    if (file.name.toLowerCase().endsWith('.xml') || file.name.toLowerCase().endsWith('.musicxml')) {
+      try {
+        setScore(parseMusicXml(await file.text()).score)
+        setNotice('Đã đọc MusicXML: ' + file.name)
+      } catch (error) { setNotice(error instanceof Error ? error.message : 'Không đọc được MusicXML.') }
+    } else {
+      setNotice('Đã nhận tệp ' + file.name + '. Bộ nhận dạng PDF/ảnh sẽ được kết nối vào không gian soạn nhạc ở bước tiếp theo.')
+    }
   }
-
-  return <main className="shell">
-    <header className="topbar"><a className="brand" href="/"><span className="seal">M</span><span><b>MELO LEGACY</b><small>STUDIO</small></span></a><span className="lab-status"><i /> MUSIC RECOGNITION LAB</span></header>
-    <section className="hero"><div className="eyebrow">MELO AI · MUSIC RECOGNITION ENGINE</div><h1>Đưa bản nhạc của bạn<br /><em>vào không gian sáng tạo.</em></h1><p>Nhập bản nhạc từ nhiều nguồn. Đọc, phân tích và chuẩn bị dữ liệu để mở trực tiếp trong Music Editor.</p></section>
-    <LocalLibrary onOpenScore={openSavedScore} />\n    <section className="section"><div className="section-head"><div><span>01</span><h2>Chọn nguồn âm nhạc</h2></div><small>IMPORT & RECOGNIZE</small></div>
-      <div className="source-grid">{sources.map(s => <button className="source-card" key={s.kind} disabled={busy} onClick={() => refs.current[s.kind]?.click()}>
-        <span className="source-icon">{s.icon}</span><b>{s.title}</b><small>{s.detail}</small><span className="choose">Chọn tệp <i>↗</i></span>
-        <input ref={el => { refs.current[s.kind] = el }} hidden type="file" accept={s.accept} onChange={e => { const file = e.target.files?.[0]; if (file) void selectFile(file, s.kind); e.currentTarget.value = '' }} />
-      </button>)}</div>
-      <div className="youtube"><span className="play">▶</span><div className="youtube-label"><b>Nguồn YouTube</b><small>Chỉ phân tích nội dung có quyền truy cập hợp lệ.</small></div><div className="youtube-form"><input value={youtube} onChange={e => setYoutube(e.target.value)} placeholder="Dán đường dẫn YouTube..." aria-label="Đường dẫn YouTube" /><button disabled={!youtube.trim()} onClick={checkYoutube}>Kiểm tra</button></div></div>
-    </section>
-    {(result || error || busy) && <section className="section result"><div className="section-head"><div><span>02</span><h2>Kết quả nhận dạng</h2></div>{result && <small className={result.status === 'read' ? 'tag ready' : 'tag pending'}>{result.status === 'read' ? 'ĐÃ ĐỌC DỮ LIỆU' : 'CHỜ XỬ LÝ'}</small>}</div>
-      {busy && <p className="message">Đang gửi tệp đến bộ xử lý nhận dạng đã cấu hình. Bản gốc đã được lưu trong thư viện thiết bị...</p>}{error && <p className="error">{error}</p>}
-      {result && <article className="result-card"><h3>{result.title}</h3><ul>{result.lines.map((line, index) => <li key={index}>{line}</li>)}</ul>
-        <div className="recognition-exports">
-          {result.exportText && <button onClick={() => downloadText('MeloLegacy-Recognized.musicxml', result.exportText!, 'application/vnd.recordare.musicxml+xml')}>Tải MusicXML</button>}
-          {result.exportMidi && <button onClick={() => downloadMidi('MeloLegacy-Recognized.mid', result.exportMidi!)}>Tải MIDI</button>}
+  function addPage() { setPages(value => value + 1); setNotice('Đã thêm một trang A4.') }
+  function selectTool(tool: Tool) {
+    setActiveTool(tool)
+    setPianoOpen(tool === 'piano')
+  }
+  function exportAction(action: string) {
+    setExportOpen(false)
+    if (action === 'print') window.print()
+    else if (action === 'download') setNotice('Chức năng xuất MusicXML/PDF sẽ lấy dữ liệu từ bản nhạc đang soạn.')
+    else if (action === 'share') {
+      if (navigator.share) void navigator.share({ title: 'Melo Legacy', text: 'Bản nhạc từ Melo Legacy Studio' }).catch(() => undefined)
+      else setNotice('Thiết bị này chưa hỗ trợ chia sẻ trực tiếp.')
+    }
+  }
+  return <main className="editor-app">
+    <header className="editor-toolbar">
+      <div className="fixed-actions">
+        <button className="fixed-icon home-icon" title="Hệ thống" aria-label="Hệ thống" onClick={() => setNotice('Khu vực hệ thống Melo Legacy')}><Icon name="home" /></button>
+        <button className={'fixed-icon library-icon ' + (libraryOpen ? 'active' : '')} title="Thư viện" aria-label="Thư viện" onClick={() => setLibraryOpen(value => !value)}><Icon name="book" /></button>
+      </div>
+      <div className="tool-scroll" aria-label="Thanh công cụ">
+        <button className="tool-button" title="Lùi thao tác" aria-label="Lùi thao tác" onClick={() => setNotice('Chưa có thao tác để hoàn tác.')}><Icon name="undo" /></button>
+        <button className="tool-button" title="Tiến thao tác" aria-label="Tiến thao tác" onClick={() => setNotice('Chưa có thao tác để làm lại.')}><Icon name="redo" /></button>
+        {toolItems.map(tool => <button key={tool.id} className={'tool-button ' + (activeTool === tool.id ? 'selected' : '')} title={tool.label} aria-label={tool.label} onClick={() => selectTool(tool.id)}>{tool.id === 'piano' ? <span className="piano-icon">▥</span> : <span>{tool.glyph}</span>}</button>)}
+      </div>
+      <div className="right-fixed">
+        <button className="fixed-icon upload-icon" title="Tải lên" aria-label="Tải lên" onClick={() => uploadRef.current?.click()}><Icon name="upload" /></button>
+        <input ref={uploadRef} type="file" hidden accept=".musicxml,.xml,.mid,.midi,.pdf,.png,.jpg,.jpeg,.webp,.wav,.mp3,.m4a" onChange={event => { void importScore(event.currentTarget.files?.[0]); event.currentTarget.value = '' }} />
+        <div className="export-wrap">
+          <button className="fixed-icon export-icon" title="Gửi, xuất hoặc tải xuống" aria-label="Gửi, xuất hoặc tải xuống" onClick={() => setExportOpen(value => !value)}><Icon name="share" /></button>
+          {exportOpen && <div className="export-menu"><button onClick={() => exportAction('share')}>Chia sẻ</button><button onClick={() => exportAction('download')}>Tải xuống / Xuất</button><button onClick={() => exportAction('print')}>In hoặc lưu PDF</button></div>}
         </div>
-        {result.score && <PianoPlayback score={result.score} />}
-        {result.score && <ScoreStaffPreview score={result.score} />}
-        {result.score && <div className="event-preview"><div className="event-preview-head"><b>Dữ liệu ký âm đã chuẩn hóa</b><small>HIỂN THỊ MẪU · TỐI ĐA 16 SỰ KIỆN</small></div>
-          {result.score.parts.map(part => <section className="part-preview" key={part.id}><b>{part.name}</b>
-            {part.measures.map(measure => <div className="measure-preview" key={part.id + '-' + measure.number}><span>Ô nhịp {measure.number}</span>
-              <div>{measure.events.slice(0, 16).map(event => <span className="event-chip" key={event.id}>{event.kind === 'rest' ? 'Dấu lặng' : event.pitch ? event.pitch.step + (event.pitch.alter > 0 ? '♯' : event.pitch.alter < 0 ? '♭' : '') + event.pitch.octave : 'Nốt chưa rõ'} · {event.duration} phách</span>)}</div>
-            </div>)}
-          </section>)}
-        </div>}
-        <p>{result.note}</p></article>}
-    </section>}
-    <section className="section"><div className="section-head"><div><span>03</span><h2>Đường đi đến Music Editor</h2></div></div><div className="flow">
-      <div><small>01</small><b>Ảnh / PDF / Audio</b><span>OMR · Audio-to-MIDI</span></div><i>→</i><div><small>02</small><b>Nhận dạng & chuẩn hóa</b><span>Music Data Engine</span></div><i>→</i><div><small>03</small><b>Music Editor</b><span>Đọc · Sửa · Phát · Lưu</span></div>
-    </div><p className="footnote">Thư viện thiết bị và khung PWA ngoại tuyến đã được bổ sung. Engine OMR và audio-to-MIDI chạy trực tiếp trong trình duyệt iPad chưa hoàn tất; dịch vụ sidecar cũ chỉ dành cho thử nghiệm phát triển, không phải yêu cầu cài đặt cho giáo viên hoặc học sinh. Music Editor chỉnh sửa đầy đủ sẽ tiếp tục phát triển trên cùng Music Data Model.</p></section>
-    <footer><span>MELO LEGACY STUDIO</span><span>MEMENTO OF MUSIC, LEGACY OF LEARNING</span></footer>
+      </div>
+    </header>
+    <div className="workspace">
+      {libraryOpen && <aside className="library-drawer"><div className="drawer-heading"><b>Thư viện nhạc</b><button onClick={() => setLibraryOpen(false)} aria-label="Đóng thư viện"><Icon name="close" /></button></div><LocalLibrary onOpenScore={openSavedScore} /></aside>}
+      <section className="score-workspace">
+        <div className="score-topline"><span>TRÌNH SOẠN NHẠC</span><div className="zoom-control"><button onClick={() => setZoom(value => Math.max(55, value - 5))} aria-label="Thu nhỏ"><Icon name="minus" /></button><span>{zoom}%</span><button onClick={() => setZoom(value => Math.min(120, value + 5))} aria-label="Phóng to"><Icon name="plus" /></button></div></div>
+        <div className="pages-scroll" style={{ ['--page-zoom' as string]: zoom / 100 }}>
+          {Array.from({ length: pages }, (_, i) => <ScorePage key={i + 1} page={i + 1} onAddNote={() => setNotice(activeTool === 'pen' ? 'Đã chọn vị trí viết trên khuông. Bộ nhập nốt trực tiếp sẽ được nối vào Music Data Model.' : 'Hãy chọn công cụ Bút để viết nốt.')} />)}
+          <button className="add-page" onClick={addPage}><Icon name="plus" /> Thêm trang nhạc</button>
+        </div>
+        {notice && <div className="editor-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng thông báo"><Icon name="close" /></button></div>}
+        {score && <div className="loaded-score"><b>{score.title || 'Bản nhạc đã mở'}</b><span>{score.parts.length} bè · đã nạp dữ liệu MusicXML</span><PianoPlayback score={score} /></div>}
+        {pianoOpen && <div className="piano-dock"><div className="piano-dock-head"><b>Bàn phím piano</b><button onClick={() => setPianoOpen(false)} aria-label="Đóng piano"><Icon name="close" /></button></div><div className="piano-keys">{Array.from({ length: 28 }, (_, i) => <span className={ [1, 3, 6, 8, 10, 13, 15, 18, 20, 22, 25, 27].includes(i) ? 'black-key' : '' } key={i} />)}</div><div className="octave-labels"><span>Quãng 3</span><span>Quãng 4</span><span>Quãng 5</span></div></div>}
+      </section>
+      <aside className="tool-options">
+        <div className="options-heading"><b>{toolItems.find(item => item.id === activeTool)?.label || 'Công cụ'}</b><span>THIẾT LẬP</span></div>
+        <div className="options-scroll">
+          {activeTool === 'pen' && <><label>Loại bút</label><button className="option-choice selected">Bút ký âm</button><button className="option-choice">Bút chì</button><button className="option-choice">Tẩy</button><label>Độ dày nét</label><input type="range" min="1" max="8" defaultValue="3" /><label>Màu nét</label><div className="color-dots"><i /><i /><i /></div></>}
+          {activeTool === 'text' && <><label>Kiểu chữ</label><button className="option-choice selected">Văn bản</button><button className="option-choice">Lời ca</button><button className="option-choice">Ký hiệu</button><label>Cỡ chữ</label><input type="range" min="10" max="32" defaultValue="16" /></>}
+          {activeTool === 'select' && <><label>Phạm vi chọn</label><button className="option-choice selected">Một nốt</button><button className="option-choice">Nhóm nốt</button><button className="option-choice">Một ô nhịp</button><button className="option-choice">Nhiều ô nhịp</button><label>Thao tác</label><button className="option-choice">Sao chép</button><button className="option-choice">Cắt</button><button className="option-choice">Dán chèn</button><button className="option-choice">Dán thay thế</button><button className="option-choice">Xóa</button></>}
+          {activeTool === 'piano' && <><label>Bàn phím</label><button className="option-choice selected" onClick={() => setPianoOpen(true)}>Mở bàn phím</button><button className="option-choice">Quãng 3</button><button className="option-choice">Quãng 4</button><button className="option-choice">Quãng 5</button></>}
+          <div className="options-note">Bảng tùy chọn cuộn dọc độc lập. Thanh công cụ chính cuộn ngang; Home và Thư viện luôn cố định.</div>
+        </div>
+      </aside>
+    </div>
   </main>
 }
