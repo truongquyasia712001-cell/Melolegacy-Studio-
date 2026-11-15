@@ -1,0 +1,16 @@
+{
+  "id": "/",
+  "name": "Melo Legacy Studio",
+  "short_name": "Melo Legacy",
+  "description": "Không gian đọc, lưu trữ và nghiên cứu âm nhạc.",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f7f5ef",
+  "theme_color": "#f7f5ef",
+  "icons": [
+    { "src": "/melo-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
