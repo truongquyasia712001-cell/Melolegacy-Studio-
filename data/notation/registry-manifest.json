@@ -1,0 +1,20 @@
+{
+  "registry_id": "melolegacy.printed_notation.smufl",
+  "schema_version": "1.0.0",
+  "source_standard": "SMuFL",
+  "source_repository": "https://github.com/w3c-cg/smufl",
+  "source_file": "metadata/glyphnames.json",
+  "source_ref": "gh-pages",
+  "source_commit": "a0ac69114c9dc3872d76120a60d990bd6a904846",
+  "glyph_file": "./smufl-glyphnames.json",
+  "glyph_count": 2940,
+  "purpose": [
+    "printed-score-symbol-reference",
+    "glyph-name-and-codepoint-lookup",
+    "omr-recognition-label-vocabulary"
+  ],
+  "pipeline_target": "PDF/image -> OMR -> validated notation model -> MusicXML",
+  "note": "This is a symbol metadata registry, not a trained OMR model or labeled image dataset. MusicXML mappings, glyph rendering previews, image training samples, and validation rules must be added in subsequent steps.",
+  "licensing_review": "Review the SMuFL specification/data attribution and font licensing before bundling any font files. Metadata is kept separate from Bravura font assets.",
+  "imported_at": "2026-11-18"
+}
