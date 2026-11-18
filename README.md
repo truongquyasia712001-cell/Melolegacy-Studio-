@@ -7,7 +7,7 @@ MeloLegacy là nền tảng giáo dục âm nhạc trực tuyến miễn phí, g
 ## Các không gian cốt lõi
 
 1. Phòng Biểu diễn
-2. Phòng Sáng tác
+2. Phòng Sáng tác (Composer Room)
 3. Phòng Huấn luyện AI
 4. Phòng Luyện tập
 5. Phòng Âm nhạc
@@ -24,3 +24,7 @@ MeloLegacy là nền tảng giáo dục âm nhạc trực tuyến miễn phí, g
 ## Tầm nhìn
 
 Cùng học tập, sáng tác, bảo tồn và trao truyền di sản âm nhạc.
+
+## Tài liệu thiết kế
+
+- [Composer Room — Phòng soạn nhạc](docs/composer-room.md): giấy soạn nhạc đa bố cục, tự dàn trang, chỉnh sửa đầy đủ, OMR PDF/ảnh, lớp phủ nhận dạng, xác minh và chuyển giao tự động.
