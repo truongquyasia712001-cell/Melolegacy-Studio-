@@ -1,6 +1,9 @@
+import json
+import tempfile
 import unittest
-from orchestrator import (AgentRegistration, MemoryAudit, MelobotConveyor,
-                           TaskState)
+from pathlib import Path
+from orchestrator import (AgentRegistration, JsonlAudit, MemoryAudit,
+                           MelobotConveyor, TaskState)
 
 
 class EchoAgent:
@@ -66,6 +69,18 @@ class ConveyorTests(unittest.TestCase):
             self.bus.dispatch(dispatched_by="melobot",
                 task_id=task.task_id, agent_id="broken-agent")
         self.assertEqual(self.audit.events[-1]["event"], "task_failed")
+
+
+    def test_jsonl_audit_appends_parseable_event_per_line(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "events.jsonl"
+            audit = JsonlAudit(path)
+            audit.append({"event": "queued", "task_id": "t1"})
+            audit.append({"event": "started", "task_id": "t1"})
+            lines = path.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(len(lines), 2)
+            self.assertEqual([json.loads(line)["event"] for line in lines],
+                             ["queued", "started"])
 
 
 if __name__ == "__main__":
