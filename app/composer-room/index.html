@@ -92,7 +92,8 @@ function renderPdf(){
  });
 }
 $("pdfFile").addEventListener("change",async e=>{
- const file=e.target.files[0];if(!file)return;\n pdfFileObject=file;$("omrBtn").disabled=false;
+ const file=e.target.files[0];if(!file)return;
+ pdfFileObject=file;$("omrBtn").disabled=false;
  if(!window.pdfjsLib){$("pdfStatus").textContent="Không tải được thư viện đọc PDF. Kiểm tra kết nối mạng rồi tải lại trang.";return;}
  try{
   pdfBytes=await file.arrayBuffer();pdfDoc=await pdfjsLib.getDocument({data:pdfBytes}).promise;pageNum=1;
