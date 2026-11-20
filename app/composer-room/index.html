@@ -38,7 +38,7 @@ button:disabled{opacity:.45;cursor:not-allowed}input[type=file]{display:none}sel
 <section class="panel">
 <h2>1. Bản nhạc PDF</h2>
 <div class="toolbar">
-<label class="filelabel" for="pdfFile">＋ Mở PDF</label><input id="pdfFile" type="file" accept="application/pdf">
+<label class="filelabel" for="pdfFile">＋ Mở PDF</label><input id="pdfFile" type="file" accept="application/pdf"><button id="omrBtn" disabled>Nhận dạng PDF → MusicXML</button>
 <button id="prevPage" disabled>← Trang trước</button><span id="pageInfo" style="font-size:13px;color:#6d7787">Chưa có PDF</span><button id="nextPage" disabled>Trang sau →</button>
 </div>
 <div class="pdfstage" id="pdfStage"><div class="empty">Mở một tệp PDF bản nhạc để xem tại đây. Tệp được xử lý trong trình duyệt, không tải lên máy chủ.</div><canvas id="pdfCanvas" hidden></canvas></div>
@@ -71,7 +71,7 @@ button:disabled{opacity:.45;cursor:not-allowed}input[type=file]{display:none}sel
 const $ = id => document.getElementById(id);
 const pitchNames = ["C","D","E","F","G","A","B"];
 const notes = [];
-let pdfDoc=null, pageNum=1, pdfBytes=null;
+let pdfDoc=null, pageNum=1, pdfBytes=null, pdfFileObject=null;
 const pitchSelect=$("pitch");
 for(let octave=3;octave<=6;octave++) for(const p of pitchNames){
  const opt=document.createElement("option");opt.value=p+octave;opt.textContent=p+octave;pitchSelect.appendChild(opt);
@@ -92,7 +92,7 @@ function renderPdf(){
  });
 }
 $("pdfFile").addEventListener("change",async e=>{
- const file=e.target.files[0];if(!file)return;
+ const file=e.target.files[0];if(!file)return;\n pdfFileObject=file;$("omrBtn").disabled=false;
  if(!window.pdfjsLib){$("pdfStatus").textContent="Không tải được thư viện đọc PDF. Kiểm tra kết nối mạng rồi tải lại trang.";return;}
  try{
   pdfBytes=await file.arrayBuffer();pdfDoc=await pdfjsLib.getDocument({data:pdfBytes}).promise;pageNum=1;
@@ -165,25 +165,40 @@ $("exportXml").onclick=()=>{
  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="melolegacy-composition.musicxml";a.click();URL.revokeObjectURL(url);
  status("Đã xuất MusicXML. Có thể mở/chỉnh sửa bằng phần mềm hỗ trợ MusicXML.");
 };
+function importMusicXmlText(text){
+ const doc=new DOMParser().parseFromString(text,"application/xml");
+ if(doc.querySelector("parsererror"))throw Error("Tệp XML không hợp lệ.");
+ const imported=[];
+ doc.querySelectorAll("part > measure > note").forEach(note=>{
+  if(note.querySelector("rest"))return;
+  const step=note.querySelector("pitch > step")?.textContent,oct=note.querySelector("pitch > octave")?.textContent;
+  const alter=Number(note.querySelector("pitch > alter")?.textContent||0);
+  const dur=Number(note.querySelector("duration")?.textContent||4);
+  const key=({ "-1":"b","0":"","1":"#" })[alter]??"";
+  const duration=({1:16,2:8,4:4,8:2,16:1})[dur]||4;
+  if(step&&oct)imported.push({pitch:step+key+oct,duration});
+ });
+ if(!imported.length)throw Error("Không tìm thấy nốt nhạc trong tệp.");
+ notes.splice(0,notes.length,...imported);renderNotes();status("Đã nhập "+imported.length+" nốt từ MusicXML.");
+}
 $("xmlFile").addEventListener("change",async e=>{
  const file=e.target.files[0];if(!file)return;
- try{
-  const text=await file.text(),doc=new DOMParser().parseFromString(text,"application/xml");
-  if(doc.querySelector("parsererror"))throw Error("Tệp XML không hợp lệ.");
-  const imported=[];
-  doc.querySelectorAll("part > measure > note").forEach(note=>{
-   if(note.querySelector("rest"))return;
-   const step=note.querySelector("pitch > step")?.textContent,oct=note.querySelector("pitch > octave")?.textContent;
-   const alter=Number(note.querySelector("pitch > alter")?.textContent||0);
-   const dur=Number(note.querySelector("duration")?.textContent||4);
-   const key=({ "-1":"b","0":"","1":"#" })[alter]??"";
-   const duration=({1:16,2:8,4:4,8:2,16:1})[dur]||4;
-   if(step&&oct)imported.push({pitch:step+key+oct,duration});
-  });
-  if(!imported.length)throw Error("Không tìm thấy nốt nhạc trong tệp.");
-  notes.splice(0,notes.length,...imported);renderNotes();status("Đã nhập "+imported.length+" nốt từ MusicXML.");
- }catch(err){status("Không nhập được MusicXML: "+err.message);}
+ try{importMusicXmlText(await file.text());}
+ catch(err){status("Không nhập được MusicXML: "+err.message);}
 });
+$("omrBtn").onclick=async()=>{
+ if(!pdfFileObject){status("Hãy mở PDF trước.");return;}
+ $("omrBtn").disabled=true;$("omrBtn").textContent="Đang nhận dạng…";
+ status("Đang gửi PDF qua cổng Melobot nội bộ để nhận dạng. Không gửi trực tiếp tới dịch vụ bên ngoài.");
+ try{
+  const form=new FormData();form.append("file",pdfFileObject,pdfFileObject.name);
+  const response=await fetch("/api/melobot/composer/omr",{method:"POST",body:form});
+  if(!response.ok)throw Error("Cổng Melobot chưa sẵn sàng hoặc xử lý thất bại (HTTP "+response.status+").");
+  importMusicXmlText(await response.text());
+  status("OMR đã trả về MusicXML. Hãy rà soát các nốt và nhịp trước khi sử dụng.");
+ }catch(err){status("Chưa thể nhận dạng tự động: "+err.message+" Luồng OMR cần được triển khai và kết nối ở phía máy chủ Melobot.");}
+ finally{$("omrBtn").disabled=!pdfFileObject;$("omrBtn").textContent="Nhận dạng PDF → MusicXML";}
+};
 $("playBtn").onclick=async()=>{
  if(!notes.length){status("Chưa có nốt để phát.");return;}
  const AudioContext=window.AudioContext||window.webkitAudioContext;if(!AudioContext){status("Trình duyệt không hỗ trợ phát âm thanh.");return;}
