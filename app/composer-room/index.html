@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17243a"><title>MeloLegacy — Phòng Soạn Nhạc</title>
+<style>
+:root{--navy:#17243a;--gold:#c8a65b;--paper:#fffefa;--ink:#202938;--muted:#6d7787;--line:#e5e8ed;--bg:#f3f5f8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,sans-serif}
+header{background:var(--navy);color:white;padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5}
+.brand{font-weight:700;letter-spacing:.3px}.brand span{color:var(--gold)}.sub{color:#d5dbe4;font-size:12px;margin-left:auto}
+main{max-width:1200px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.9fr);gap:16px}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.panel h2{font-size:16px;margin:0;padding:14px 16px;border-bottom:1px solid var(--line)}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;align-items:center}
+button,.filelabel,select,input{font:inherit}button,.filelabel{border:1px solid #d6dbe3;background:white;border-radius:9px;padding:9px 12px;cursor:pointer;color:var(--ink)}
+button.primary{background:var(--navy);color:white;border-color:var(--navy)}button.gold{background:var(--gold);border-color:var(--gold);color:#171717}
+button:disabled{opacity:.45;cursor:not-allowed}input[type=file]{display:none}select{padding:9px;border:1px solid #d6dbe3;border-radius:9px;background:white}
+.pdfstage{background:#e9edf2;padding:12px;min-height:520px;display:flex;align-items:flex-start;justify-content:center;overflow:auto}
+#pdfCanvas{max-width:100%;height:auto;box-shadow:0 3px 18px #1b27351c;background:white}
+.empty{color:var(--muted);text-align:center;margin:auto;padding:40px 18px;max-width:340px}
+.status{padding:9px 14px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.editor-wrap{padding:14px}.staffbox{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:10px;overflow-x:auto}
+#staff{width:100%;min-width:520px;height:230px;display:block}
+.noteform{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:12px 0}
+.noteform label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px}
+.noteform select{width:100%}
+.notelist{max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.note-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.note-row:last-child{border:0}.note-row .meta{color:var(--muted);flex:1}.note-row button{padding:5px 9px}
+.help{background:#faf7ef;border:1px solid #eee2c4;padding:10px 12px;border-radius:10px;font-size:12px;color:#66552e;line-height:1.5;margin-top:12px}
+@media(max-width:850px){main{grid-template-columns:1fr;padding:10px}.pdfstage{min-height:350px}.sub{display:none}}
+</style>
+</head>
+<body>
+<header><div class="brand">♫ <span>Melo</span>Legacy</div><div>Phòng Soạn Nhạc</div><div class="sub">Bản thử nghiệm làm việc với PDF và MusicXML</div></header>
+<main>
+<section class="panel">
+<h2>1. Bản nhạc PDF</h2>
+<div class="toolbar">
+<label class="filelabel" for="pdfFile">＋ Mở PDF</label><input id="pdfFile" type="file" accept="application/pdf">
+<button id="prevPage" disabled>← Trang trước</button><span id="pageInfo" style="font-size:13px;color:#6d7787">Chưa có PDF</span><button id="nextPage" disabled>Trang sau →</button>
+</div>
+<div class="pdfstage" id="pdfStage"><div class="empty">Mở một tệp PDF bản nhạc để xem tại đây. Tệp được xử lý trong trình duyệt, không tải lên máy chủ.</div><canvas id="pdfCanvas" hidden></canvas></div>
+<div class="status" id="pdfStatus">Chưa chọn tệp PDF.</div>
+</section>
+<section class="panel">
+<h2>2. Bản nhạc có thể chỉnh sửa</h2>
+<div class="toolbar">
+<label class="filelabel" for="xmlFile">Mở MusicXML</label><input id="xmlFile" type="file" accept=".musicxml,.xml,application/vnd.recordare.musicxml+xml">
+<button class="primary" id="exportXml">Xuất MusicXML</button><button id="playBtn">▶ Phát thử</button><button id="clearBtn">Xóa bản nhạc</button>
+</div>
+<div class="editor-wrap">
+<div class="staffbox"><svg id="staff" viewBox="0 0 640 230" role="img" aria-label="Khuông nhạc và các nốt đang soạn"></svg></div>
+<div class="noteform">
+<label>Độ cao<select id="pitch"></select></label>
+<label>Trường độ<select id="duration"><option value="4">Nốt đen</option><option value="8">Nốt trắng</option><option value="16">Nốt tròn</option><option value="2">Nốt móc đơn</option><option value="1">Nốt móc kép</option></select></label>
+<button class="gold" id="addNote" style="align-self:end">＋ Thêm nốt</button>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px"><strong style="font-size:13px">Các nốt trong bản nhạc</strong><span id="noteCount" style="font-size:12px;color:#6d7787">0 nốt</span></div>
+<div class="notelist" id="noteList"><div class="empty" style="padding:20px">Chưa có nốt. Chọn cao độ và trường độ rồi thêm nốt.</div></div>
+<div class="help"><strong>Lưu ý về nhận dạng PDF:</strong> Bản thử nghiệm này hiển thị PDF và cho phép nhập/chỉnh sửa ký âm, phát thử, xuất MusicXML. Nó chưa tự đọc nốt từ PDF. Muốn chuyển PDF thành bản nhạc tự động, cần nối bộ OMR chuyên dụng và kiểm tra kết quả trước khi xác nhận.</div>
+</div>
+<div class="status" id="editorStatus">Bản nhạc mới · Đô trưởng · 4/4 · Khóa Sol</div>
+</section>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const pitchNames = ["C","D","E","F","G","A","B"];
+const notes = [];
+let pdfDoc=null, pageNum=1, pdfBytes=null;
+const pitchSelect=$("pitch");
+for(let octave=3;octave<=6;octave++) for(const p of pitchNames){
+ const opt=document.createElement("option");opt.value=p+octave;opt.textContent=p+octave;pitchSelect.appendChild(opt);
+}
+pitchSelect.value="C4";
+if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";}
+function status(message){$("editorStatus").textContent=message;}
+function renderPdf(){
+ if(!pdfDoc)return;
+ pdfDoc.getPage(pageNum).then(page=>{
+  const viewport=page.getViewport({scale:1.45}), canvas=$("pdfCanvas"),ctx=canvas.getContext("2d");
+  canvas.width=viewport.width;canvas.height=viewport.height;canvas.hidden=false;
+  page.render({canvasContext:ctx,viewport}).promise.then(()=>{
+   $("pageInfo").textContent="Trang "+pageNum+" / "+pdfDoc.numPages;
+   $("prevPage").disabled=pageNum<=1;$("nextPage").disabled=pageNum>=pdfDoc.numPages;
+   $("pdfStatus").textContent="Đã mở PDF trong trình duyệt · "+pdfDoc.numPages+" trang";
+  });
+ });
+}
+$("pdfFile").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ if(!window.pdfjsLib){$("pdfStatus").textContent="Không tải được thư viện đọc PDF. Kiểm tra kết nối mạng rồi tải lại trang.";return;}
+ try{
+  pdfBytes=await file.arrayBuffer();pdfDoc=await pdfjsLib.getDocument({data:pdfBytes}).promise;pageNum=1;
+  $("pdfStage").querySelector(".empty")?.remove();renderPdf();
+ }catch(err){$("pdfStatus").textContent="Không mở được PDF: "+err.message;}
+});
+$("prevPage").onclick=()=>{if(pageNum>1){pageNum--;renderPdf();}};
+$("nextPage").onclick=()=>{if(pdfDoc&&pageNum<pdfDoc.numPages){pageNum++;renderPdf();}};
+function pitchMidi(name){
+ const m=name.match(/^([A-G])([#b]?)(-?\d+)$/);if(!m)return 60;
+ const semis={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+ return (Number(m[3])+1)*12+semis[m[1]]+(m[2]==="#"?1:m[2]==="b"?-1:0);
+}
+function durationLabel(d){return ({16:"Nốt tròn",8:"Nốt trắng",4:"Nốt đen",2:"Móc đơn",1:"Móc kép"})[d]||"Trường độ "+d;}
+function addNote(p,d){notes.push({pitch:p,duration:Number(d)});renderNotes();}
+$("addNote").onclick=()=>{addNote(pitchSelect.value,$("duration").value);status("Đã thêm "+pitchSelect.value+" · "+durationLabel(Number($("duration").value)));};
+$("clearBtn").onclick=()=>{notes.splice(0);renderNotes();status("Đã tạo bản nhạc trống.");};
+function renderNotes(){
+ $("noteCount").textContent=notes.length+" nốt";
+ const list=$("noteList");list.replaceChildren();
+ if(!notes.length){const div=document.createElement("div");div.className="empty";div.style.padding="20px";div.textContent="Chưa có nốt. Chọn cao độ và trường độ rồi thêm nốt.";list.append(div);}
+ notes.forEach((n,i)=>{
+  const row=document.createElement("div");row.className="note-row";
+  const strong=document.createElement("strong");strong.textContent=(i+1)+". "+n.pitch;
+  const meta=document.createElement("span");meta.className="meta";meta.textContent=durationLabel(n.duration);
+  const del=document.createElement("button");del.textContent="Xóa";del.setAttribute("aria-label","Xóa nốt "+(i+1));del.onclick=()=>{notes.splice(i,1);renderNotes();};
+  row.append(strong,meta,del);list.append(row);
+ });
+ drawStaff();
+}
+function drawStaff(){
+ const svg=$("staff");svg.replaceChildren();
+ const NS="http://www.w3.org/2000/svg";
+ const el=(tag,attrs,parent=svg)=>{const x=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>x.setAttribute(k,v));parent.append(x);return x;};
+ for(let i=0;i<5;i++)el("line",{x1:35,y1:65+i*12,x2:610,y2:65+i*12,stroke:"#30343b","stroke-width":1.4});
+ const clef=el("text",{x:42,y:112,"font-size":62,fill:"#b08b3f"});clef.textContent="𝄞";
+ const unit=notes.reduce((s,n)=>s+16/n.duration,0), maxPerLine=16, lineCount=Math.max(1,Math.ceil(unit/maxPerLine));
+ const spacing=Math.min(34,540/Math.max(1,Math.min(notes.length,16)));
+ let beat=0;
+ notes.forEach((n,i)=>{
+  const local=beat%maxPerLine, x=116+(local*spacing);
+  const midi=pitchMidi(n.pitch), staffStep=midi-64; // E4 is bottom line
+  const y=113-staffStep*3;
+  if(y<20||y>180)return;
+  if(n.duration===16)el("ellipse",{cx:x,cy:y,rx:7,ry:4.5,fill:"none",stroke:"#1d2734","stroke-width":2});
+  else el("ellipse",{cx:x,cy:y,rx:7,ry:4.5,fill:"#1d2734",transform:"rotate(-18 "+x+" "+y+")"});
+  if(n.duration!==16)el("line",{x1:x+6,y1:y,x2:x+6,y2:y-36,stroke:"#1d2734","stroke-width":1.8});
+  const label=el("text",{x:x-9,y:y+19,"font-size":9,fill:"#8a6b2e"});label.textContent=n.pitch;
+  beat+=16/n.duration;
+ });
+}
+function xmlEscape(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));}
+function toMusicXml(){
+ let body="",beat=0,measure=1,measureNotes=[];
+ const flush=(num)=>{if(!measureNotes.length&&num>1)return;body+="<measure number=\""+num+"\">"+(num===1?'<attributes><divisions>4</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>':"")+measureNotes.join("")+"</measure>";measureNotes=[];};
+ for(const n of notes){
+  const m=n.pitch.match(/^([A-G])([#b]?)(-?\d+)$/);if(!m)continue;
+  const dur=16/n.duration, midi=pitchMidi(n.pitch), type=({16:"whole",8:"half",4:"quarter",2:"eighth",1:"16th"})[n.duration]||"quarter";
+  if(beat+dur>16){flush(measure++);beat=0;}
+  const alter=m[2]==="#"?1:m[2]==="b"?-1:0;
+  measureNotes.push("<note><pitch><step>"+m[1]+"</step>"+(alter?("<alter>"+alter+"</alter>"):"")+"<octave>"+m[3]+"</octave></pitch><duration>"+dur+"</duration><type>"+type+"</type></note>");
+  beat+=dur;if(beat===16){flush(measure++);beat=0;}
+ }
+ if(measureNotes.length||!body)flush(measure);
+ return '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">\n<score-partwise version="4.0"><work><work-title>MeloLegacy composition</work-title></work><part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list><part id="P1">'+body+'</part></score-partwise>';
+}
+$("exportXml").onclick=()=>{
+ if(!notes.length){status("Chưa có nốt để xuất. Hãy thêm nốt trước.");return;}
+ const blob=new Blob([toMusicXml()],{type:"application/vnd.recordare.musicxml+xml"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="melolegacy-composition.musicxml";a.click();URL.revokeObjectURL(url);
+ status("Đã xuất MusicXML. Có thể mở/chỉnh sửa bằng phần mềm hỗ trợ MusicXML.");
+};
+$("xmlFile").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{
+  const text=await file.text(),doc=new DOMParser().parseFromString(text,"application/xml");
+  if(doc.querySelector("parsererror"))throw Error("Tệp XML không hợp lệ.");
+  const imported=[];
+  doc.querySelectorAll("part > measure > note").forEach(note=>{
+   if(note.querySelector("rest"))return;
+   const step=note.querySelector("pitch > step")?.textContent,oct=note.querySelector("pitch > octave")?.textContent;
+   const alter=Number(note.querySelector("pitch > alter")?.textContent||0);
+   const dur=Number(note.querySelector("duration")?.textContent||4);
+   const key=({ "-1":"b","0":"","1":"#" })[alter]??"";
+   const duration=({1:16,2:8,4:4,8:2,16:1})[dur]||4;
+   if(step&&oct)imported.push({pitch:step+key+oct,duration});
+  });
+  if(!imported.length)throw Error("Không tìm thấy nốt nhạc trong tệp.");
+  notes.splice(0,notes.length,...imported);renderNotes();status("Đã nhập "+imported.length+" nốt từ MusicXML.");
+ }catch(err){status("Không nhập được MusicXML: "+err.message);}
+});
+$("playBtn").onclick=async()=>{
+ if(!notes.length){status("Chưa có nốt để phát.");return;}
+ const AudioContext=window.AudioContext||window.webkitAudioContext;if(!AudioContext){status("Trình duyệt không hỗ trợ phát âm thanh.");return;}
+ const ctx=new AudioContext();let t=ctx.currentTime;
+ notes.forEach(n=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type="sine";osc.frequency.value=440*Math.pow(2,(pitchMidi(n.pitch)-69)/12);gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.18,t+.02);gain.gain.exponentialRampToValueAtTime(.0001,t+.32);osc.connect(gain).connect(ctx.destination);osc.start(t);osc.stop(t+.34);t+=.38;});
+ status("Đang phát thử giai điệu bằng âm thanh piano mô phỏng dạng sóng sin.");
+ setTimeout(()=>ctx.close(),Math.max(500,(t-ctx.currentTime)*1000+500));
+};
+renderNotes();
+})();
+</script>
+</body></html>
