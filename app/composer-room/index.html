@@ -194,8 +194,11 @@ $("omrBtn").onclick=async()=>{
   const form=new FormData();form.append("file",pdfFileObject,pdfFileObject.name);
   const response=await fetch("/api/melobot/composer/omr",{method:"POST",body:form});
   if(!response.ok)throw Error("Cổng Melobot chưa sẵn sàng hoặc xử lý thất bại (HTTP "+response.status+").");
-  importMusicXmlText(await response.text());
-  status("OMR đã trả về MusicXML. Hãy rà soát các nốt và nhịp trước khi sử dụng.");
+  const resultBlob=await response.blob();
+  if(resultBlob.size===0)throw Error("Máy chủ trả về tệp MusicXML rỗng.");
+  const downloadUrl=URL.createObjectURL(resultBlob),downloadLink=document.createElement("a");
+  downloadLink.href=downloadUrl;downloadLink.download="melolegacy-recognized.musicxml";downloadLink.click();URL.revokeObjectURL(downloadUrl);
+  status("Đã nhận tệp MusicXML gốc và tải xuống. Bản nhạc nhiều bè/khuông được giữ nguyên; hãy mở bằng trình soạn nhạc hỗ trợ MusicXML để rà soát và chỉnh sửa.");
  }catch(err){status("Chưa thể nhận dạng tự động: "+err.message+" Luồng OMR cần được triển khai và kết nối ở phía máy chủ Melobot.");}
  finally{$("omrBtn").disabled=!pdfFileObject;$("omrBtn").textContent="Nhận dạng PDF → MusicXML";}
 };
