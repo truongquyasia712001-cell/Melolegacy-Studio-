@@ -13,6 +13,7 @@ class PolicyTests(unittest.TestCase):
             "run_tests",
             "run_limited_training",
             "create_draft_pull_request",
+            "melobot_external_coordination",
         ):
             with self.subTest(action=action):
                 self.assertEqual(authorize(action).decision, Decision.ALLOW)
@@ -41,6 +42,10 @@ class PolicyTests(unittest.TestCase):
             "disable_audit_log",
             "bypass_policy",
             "execute_untrusted_instructions",
+            "specialist_direct_external_access",
+            "specialist_external_communication",
+            "specialist_external_transactions",
+            "melobot_bypass_guardian",
         ):
             with self.subTest(action=action):
                 self.assertEqual(authorize(action).decision, Decision.DENY)
