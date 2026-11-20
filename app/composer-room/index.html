@@ -127,22 +127,20 @@ function renderNotes(){
 function drawStaff(){
  const svg=$("staff");svg.replaceChildren();
  const NS="http://www.w3.org/2000/svg";
+ const width=Math.max(640,150+notes.length*34);svg.setAttribute("viewBox","0 0 "+width+" 230");svg.style.width=width+"px";
  const el=(tag,attrs,parent=svg)=>{const x=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>x.setAttribute(k,v));parent.append(x);return x;};
- for(let i=0;i<5;i++)el("line",{x1:35,y1:65+i*12,x2:610,y2:65+i*12,stroke:"#30343b","stroke-width":1.4});
+ for(let i=0;i<5;i++)el("line",{x1:35,y1:65+i*12,x2:width-24,y2:65+i*12,stroke:"#30343b","stroke-width":1.4});
  const clef=el("text",{x:42,y:112,"font-size":62,fill:"#b08b3f"});clef.textContent="𝄞";
- const unit=notes.reduce((s,n)=>s+16/n.duration,0), maxPerLine=16, lineCount=Math.max(1,Math.ceil(unit/maxPerLine));
- const spacing=Math.min(34,540/Math.max(1,Math.min(notes.length,16)));
- let beat=0;
+ const letterIndex={C:0,D:1,E:2,F:3,G:4,A:5,B:6};
  notes.forEach((n,i)=>{
-  const local=beat%maxPerLine, x=116+(local*spacing);
-  const midi=pitchMidi(n.pitch), staffStep=midi-64; // E4 is bottom line
-  const y=113-staffStep*3;
-  if(y<20||y>180)return;
+  const match=n.pitch.match(/^([A-G])([#b]?)(-?\\d+)$/);if(!match)return;
+  const x=116+i*34,diatonic=Number(match[3])*7+letterIndex[match[1]],base=4*7+letterIndex.E;
+  const y=113-(diatonic-base)*6;
+  if(y<18||y>195)return;
   if(n.duration===16)el("ellipse",{cx:x,cy:y,rx:7,ry:4.5,fill:"none",stroke:"#1d2734","stroke-width":2});
   else el("ellipse",{cx:x,cy:y,rx:7,ry:4.5,fill:"#1d2734",transform:"rotate(-18 "+x+" "+y+")"});
   if(n.duration!==16)el("line",{x1:x+6,y1:y,x2:x+6,y2:y-36,stroke:"#1d2734","stroke-width":1.8});
-  const label=el("text",{x:x-9,y:y+19,"font-size":9,fill:"#8a6b2e"});label.textContent=n.pitch;
-  beat+=16/n.duration;
+  const label=el("text",{x:x-10,y:y+19,"font-size":9,fill:"#8a6b2e"});label.textContent=n.pitch;
  });
 }
 function xmlEscape(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]));}
