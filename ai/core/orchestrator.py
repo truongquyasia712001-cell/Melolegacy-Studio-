@@ -64,7 +64,7 @@ class JsonlAudit:
 
     def append(self, event: dict[str, Any]) -> None:
         with self.path.open("a", encoding="utf-8") as stream:
-            stream.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\\n")
+            stream.write(json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 @dataclass(frozen=True)
