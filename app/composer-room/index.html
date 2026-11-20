@@ -169,18 +169,33 @@ $("exportXml").onclick=()=>{
 function importMusicXmlText(text){
  const doc=new DOMParser().parseFromString(text,"application/xml");
  if(doc.querySelector("parsererror"))throw Error("Tệp XML không hợp lệ.");
+ const parts=[...doc.querySelectorAll("score-partwise > part")];
+ if(parts.length!==1)throw Error("Trình soạn thảo thử nghiệm hiện chỉ nhập một bè đơn. Tệp MusicXML gốc vẫn được giữ nguyên.");
+ const measures=[...parts[0].querySelectorAll(":scope > measure")];
  const imported=[];
- doc.querySelectorAll("part > measure > note").forEach(note=>{
-  if(note.querySelector("rest"))return;
-  const step=note.querySelector("pitch > step")?.textContent,oct=note.querySelector("pitch > octave")?.textContent;
-  const alter=Number(note.querySelector("pitch > alter")?.textContent||0);
-  const dur=Number(note.querySelector("duration")?.textContent||4);
-  const key=({ "-1":"b","0":"","1":"#" })[alter]??"";
-  const duration=({1:16,2:8,4:4,8:2,16:1})[dur]||4;
-  if(step&&oct)imported.push({pitch:step+key+oct,duration});
- });
+ for(const measure of measures){
+  const divisions=Number(measure.querySelector(":scope > attributes > divisions")?.textContent||4);
+  const fifths=Number(measure.querySelector(":scope > attributes > key > fifths")?.textContent||0);
+  const beats=Number(measure.querySelector(":scope > attributes > time > beats")?.textContent||4);
+  const beatType=Number(measure.querySelector(":scope > attributes > time > beat-type")?.textContent||4);
+  const clef=measure.querySelector(":scope > attributes > clef");
+  if(fifths!==0||beats!==4||beatType!==4||(clef&&(clef.querySelector("sign")?.textContent!=="G"||clef.querySelector("line")?.textContent!=="2")))
+   throw Error("Bản nhạc có hóa biểu, nhịp hoặc khóa khác phạm vi hỗ trợ. Không thay đổi dữ liệu.");
+  for(const note of measure.querySelectorAll(":scope > note")){
+   if(note.querySelector("rest,chord")||(note.querySelector("staff")&&note.querySelector("staff").textContent!=="1")||(note.querySelector("voice")&&note.querySelector("voice").textContent!=="1"))
+    throw Error("Bản nhạc có nhiều bè, hợp âm hoặc dấu lặng. Không nhập để tránh làm mất dữ liệu.");
+   const step=note.querySelector("pitch > step")?.textContent,oct=note.querySelector("pitch > octave")?.textContent;
+   const alter=Number(note.querySelector("pitch > alter")?.textContent||0);
+   const rawDuration=Number(note.querySelector("duration")?.textContent||0)/divisions;
+   const duration=({4:16,2:8,1:4,0.5:2,0.25:1})[rawDuration];
+   if(!step||!oct||duration===undefined)throw Error("Có nốt hoặc trường độ chưa được hỗ trợ. Tệp gốc không bị thay đổi.");
+   const key=({ "-1":"b","0":"","1":"#" })[alter];
+   if(key===undefined)throw Error("Dấu hóa chưa được hỗ trợ trong bản nhập thử nghiệm.");
+   imported.push({pitch:step+key+oct,duration});
+  }
+ }
  if(!imported.length)throw Error("Không tìm thấy nốt nhạc trong tệp.");
- notes.splice(0,notes.length,...imported);renderNotes();status("Đã nhập "+imported.length+" nốt từ MusicXML.");
+ notes.splice(0,notes.length,...imported);renderNotes();status("Đã nhập "+imported.length+" nốt đơn từ MusicXML.");
 }
 $("xmlFile").addEventListener("change",async e=>{
  const file=e.target.files[0];if(!file)return;
