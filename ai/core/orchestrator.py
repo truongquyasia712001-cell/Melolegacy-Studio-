@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Protocol
@@ -45,6 +46,11 @@ class Specialist(Protocol):
     def execute(self, task: Task) -> dict[str, Any]: ...
 
 
+class KnowledgeProvider(Protocol):
+    """Read-only project knowledge interface consumed by Melobot."""
+    def retrieve(self, query: str, *, limit: int = 10) -> list[dict[str, Any]]: ...
+
+
 class AuditSink(Protocol):
     def append(self, event: dict[str, Any]) -> None: ...
 
@@ -76,13 +82,34 @@ class AgentRegistration:
 
 
 class MelobotConveyor:
-    """The sole task issuer and dispatcher for specialist Melo Agents."""
+    """The sole task issuer, knowledge retriever, and dispatcher for Melo Agents."""
     AUTHORITY = "melobot"
 
-    def __init__(self, audit: AuditSink | None = None) -> None:
+    def __init__(self, audit: AuditSink | None = None,
+                 knowledge_provider: KnowledgeProvider | None = None) -> None:
         self._agents: dict[str, AgentRegistration] = {}
         self._tasks: dict[str, Task] = {}
         self.audit = audit or MemoryAudit()
+        self.knowledge_provider = knowledge_provider
+
+    def retrieve_knowledge(self, *, requested_by: str, query: str,
+                           limit: int = 10) -> tuple[dict[str, Any], ...]:
+        """Retrieve approved shared knowledge through Melobot, never through agents."""
+        if requested_by != self.AUTHORITY:
+            raise PermissionError("Only Melobot may retrieve project knowledge.")
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("A non-empty knowledge query is required.")
+        if limit < 1 or limit > 100:
+            raise ValueError("limit must be between 1 and 100.")
+        if self.knowledge_provider is None:
+            raise RuntimeError("No approved knowledge provider is connected.")
+        records = self.knowledge_provider.retrieve(query, limit=limit)
+        if not isinstance(records, list) or any(not isinstance(item, dict) for item in records):
+            raise TypeError("Knowledge provider must return a list of record objects.")
+        query_digest = hashlib.sha256(query.encode("utf-8")).hexdigest()
+        self._record("knowledge_retrieved", query_sha256=query_digest,
+                     result_count=len(records))
+        return tuple(dict(item) for item in records)
 
     def register_agent(self, registration: AgentRegistration) -> None:
         if not registration.internal_only:
