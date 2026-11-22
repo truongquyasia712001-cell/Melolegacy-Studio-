@@ -37,7 +37,7 @@ function Icon({ name, className = '' }: { name: string; className?: string }) {
 function ActionButton({ name, label, onClick, active = false }: { name: string; label: string; onClick: () => void; active?: boolean }) {
   return <button className={'icon-button' + (active ? ' is-active' : '')} type="button" title={label} aria-label={label} onClick={onClick}><Icon name={name} /></button>
 }
-function StaffSystem({ row, page, first, last, measures, onMeasure, onAdd }: { row: number; page: number; first: boolean; last: boolean; measures: Measure[]; onMeasure: (id: number) => void; onAdd: () => void }) {
+function StaffSystem({ row, first, last, measures, onMeasure, onAdd }: { row: number; first: boolean; last: boolean; measures: Measure[]; onMeasure: (id: number) => void; onAdd: () => void }) {
   const firstMeasure = measures[0]?.id || row * 5 + 1
   return <div className="staff-system">
     <span className="measure-index">{firstMeasure}</span>
@@ -57,7 +57,7 @@ function ScorePage({ page, totalPages, measures, onMeasure, onAdd }: { page: num
   return <article className="a4-sheet">
     <span className="sheet-page-number">{page}</span>
     <div className="sheet-systems">
-      {Array.from({ length: 12 }, (_, row) => <StaffSystem key={row} row={row} page={page} first={page === 1 && row === 0} last={page === totalPages && row === 11} measures={measures.slice(row * 5, row * 5 + 5)} onMeasure={onMeasure} onAdd={onAdd}/>)}
+      {Array.from({ length: 12 }, (_, row) => <StaffSystem key={row} row={row} first={page === 1 && row === 0} last={page === totalPages && row === 11} measures={measures.slice(row * 5, row * 5 + 5)} onMeasure={onMeasure} onAdd={onAdd}/>)}
     </div>
   </article>
 }
