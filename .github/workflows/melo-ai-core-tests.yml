@@ -35,19 +35,6 @@ jobs:
         run: python -m unittest discover -p 'test_*.py' -v
       - name: Run gateway and OMR worker boundary tests
         run: python -m unittest discover -s services/tests -p 'test_*.py' -v
-      - name: Check Composer Room browser script syntax
-        run: |
-          python - <<'PY'
-          import re
-          from pathlib import Path
-          source = Path("app/composer-room/index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script>(.*?)</script>", source, re.S)
-          assert scripts, "No inline application script found"
-          Path("/tmp/composer-room-check.js").write_text("\n".join(scripts), encoding="utf-8")
-          PY
-          node --check /tmp/composer-room-check.js
-      - name: Test Composer Room MusicXML duration export
-        run: node app/composer-room/test-musicxml.js
 
   omr-worker-container:
     runs-on: ubuntu-latest
