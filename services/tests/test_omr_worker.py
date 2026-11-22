@@ -4,7 +4,6 @@ from __future__ import annotations
 import importlib.util
 import os
 import subprocess
-import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -33,7 +32,8 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         }
 
     def test_rejects_wrong_melobot_token(self):
-        headers = dict(self.headers, **{"X-Melobot-Token": "wrong"})
+        headers = dict(self.headers)
+        headers["X-Melobot-Token"] = "wrong"
         response = self.client.post(
             "/v1/convert",
             files={"file": ("score.pdf", b"%PDF-1.7\nsource", "application/pdf")},
