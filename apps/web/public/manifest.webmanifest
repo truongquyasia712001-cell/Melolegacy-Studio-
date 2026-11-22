@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "MeloLegacy – Phòng Soạn Nhạc",
+  "short_name": "MeloLegacy",
+  "description": "Không gian soạn nhạc của MeloLegacy",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f1eee8",
+  "theme_color": "#a9823e",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
