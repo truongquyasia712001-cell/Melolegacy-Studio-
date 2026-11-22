@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from orchestrator import (AgentRegistration, JsonlAudit, MemoryAudit,
                            MelobotConveyor, TaskState)
+from memory import MemoryStore, MeloKnowledgeProvider
 
 
 class EchoAgent:
@@ -70,7 +71,6 @@ class ConveyorTests(unittest.TestCase):
                 task_id=task.task_id, agent_id="broken-agent")
         self.assertEqual(self.audit.events[-1]["event"], "task_failed")
 
-
     def test_jsonl_audit_appends_parseable_event_per_line(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "events.jsonl"
@@ -81,6 +81,43 @@ class ConveyorTests(unittest.TestCase):
             self.assertEqual(len(lines), 2)
             self.assertEqual([json.loads(line)["event"] for line in lines],
                              ["queued", "started"])
+
+    def test_only_melobot_can_retrieve_knowledge(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = MemoryStore(Path(directory) / "memory.sqlite3")
+            store.add(logical_key="music-core", title="Music Core",
+                      content="PDF to MusicXML with teacher verification")
+            bus = MelobotConveyor(self.audit, MeloKnowledgeProvider(store))
+            with self.assertRaises(PermissionError):
+                bus.retrieve_knowledge(requested_by="notation-agent",
+                                       query="MusicXML")
+
+    def test_melobot_retrieves_knowledge_and_audits_without_raw_query(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = MemoryStore(Path(directory) / "memory.sqlite3")
+            store.add(logical_key="music-core", title="Music Core",
+                      content="PDF to MusicXML with teacher verification")
+            bus = MelobotConveyor(self.audit, MeloKnowledgeProvider(store))
+            results = bus.retrieve_knowledge(requested_by="melobot",
+                                             query="MusicXML")
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0]["logical_key"], "music-core")
+            event = self.audit.events[-1]
+            self.assertEqual(event["event"], "knowledge_retrieved")
+            self.assertEqual(event["result_count"], 1)
+            self.assertNotIn("query", event)
+
+    def test_missing_knowledge_provider_fails_closed(self):
+        with self.assertRaises(RuntimeError):
+            self.bus.retrieve_knowledge(requested_by="melobot",
+                                        query="architecture")
+
+    def test_invalid_knowledge_request_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.bus.retrieve_knowledge(requested_by="melobot", query=" ")
+        with self.assertRaises(ValueError):
+            self.bus.retrieve_knowledge(requested_by="melobot",
+                                        query="test", limit=0)
 
 
 if __name__ == "__main__":
