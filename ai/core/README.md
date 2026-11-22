@@ -1,33 +1,50 @@
-# MeloLegacy AI Core — policy prototype
+# MeloLegacy AI Core — policy, memory, orchestration, and network registry prototypes
 
-This directory starts the deterministic safety and autonomy layer for MeloLegacy AI.
+This directory contains bounded components for the MeloLegacy control plane.
 
 ## Current scope
 
-- `policy.py` classifies proposed operations as:
-  - `ALLOW`: bounded autonomous work.
-  - `REQUIRE_APPROVAL`: sensitive, production, or irreversible work.
-  - `DENY`: secret exposure, policy bypass, or unknown operations.
-- `test_policy.py` verifies the policy behavior using Python's standard library.
+- `policy.py` classifies proposed operations as allow, require approval, or deny.
+- `memory.py` provides versioned SQLite knowledge storage with provenance and rights metadata.
+- `orchestrator.py` exposes knowledge retrieval through the Melobot-controlled task conveyor and records events.
+- `node_registry.py` catalogs independently owned network nodes without contacting their endpoints or storing credentials.
+- Tests cover policy, memory, orchestration, and node-registry boundaries.
 
-This is a policy prototype, not yet a connected agent, scheduler, memory service, or production controller. It does not execute tools or access credentials.
+New network nodes remain pending until Guardian verification. Only active nodes are discoverable. The registry is metadata-only: it does not connect, authenticate, synchronize, or transfer data to partner nodes.
+
+## Data and authority boundaries
+
+- Project knowledge and operational memory are supported.
+- Shared heritage requires provenance, explicit licensing/rights metadata, and reviewed/verified status.
+- Private user/student legacy is excluded from the shared store.
+- Melobot is the sole task issuer and dispatcher; specialist agents cannot independently select tasks or call external systems.
+- Node owners retain independent data ownership. Melobot stores only approved connection metadata.
+- The current actor-name checks are in-process logical guards, not cryptographic authentication. Do not expose these prototypes as network authorization boundaries.
+
+See [Melo Memory v0 implementation note](../../docs/melo-memory-v0.md).
 
 ## Run tests
 
 From the repository root:
 
 ```bash
+python -m compileall -q ai/core
 python -m unittest discover -s ai/core -p 'test_*.py' -v
 ```
 
-## Next implementation stages
+No third-party Python dependency is required for these prototypes. A GitHub Actions workflow runs compilation and tests for pull requests targeting the integration or main branches.
 
-1. Add a versioned task/event schema and append-only audit store.
-2. Add read-only GitHub knowledge retrieval.
-3. Add a planner that emits structured task plans.
-4. Route every tool call through this policy gate.
-5. Add approval handling and a sandboxed GitHub branch writer.
-6. Add Colab/training adapter with dataset, runtime, and cost limits.
-7. Add evaluation and monitoring before any production integration.
+## Not production ready
 
-Do not put API keys, passwords, cookies, or student data in this directory or in Git.
+No authenticated network API, per-node mTLS, per-user ACL, encryption-at-rest, backup automation, distributed synchronization, external endpoint verification, semantic search, or deployed Melobot service is included. The node registry does not contact external organizations or endpoints.
+
+## Fast-track next steps
+
+1. Add authenticated identity and Guardian approval before exposing any API.
+2. Define a versioned node handshake contract (capabilities, protocol versions, data rights, retention, and audit fields).
+3. Add a read-only node discovery API after the authentication boundary is reviewed.
+4. Persist task/audit events and implement backup/restore tests.
+5. Connect the PDF-to-MusicXML pipeline to the same task interface behind capability-specific permissions.
+6. Run CI and resolve failures before requesting review or merge.
+
+Do not put API keys, passwords, cookies, private student data, or partner datasets in Git. Production deployment, private data operations, external integrations, and merges remain approval-gated.
