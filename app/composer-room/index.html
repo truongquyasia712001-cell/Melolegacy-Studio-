@@ -149,7 +149,9 @@ function toMusicXml(){
  const flush=(num)=>{if(!measureNotes.length&&num>1)return;body+="<measure number=\""+num+"\">"+(num===1?'<attributes><divisions>4</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>G</sign><line>2</line></clef></attributes>':"")+measureNotes.join("")+"</measure>";measureNotes=[];};
  for(const n of notes){
   const m=n.pitch.match(/^([A-G])([#b]?)(-?\d+)$/);if(!m)continue;
-  const dur=16/n.duration, midi=pitchMidi(n.pitch), type=({16:"whole",8:"half",4:"quarter",2:"eighth",1:"16th"})[n.duration]||"quarter";
+  const duration=Number(n.duration), type=({16:"whole",8:"half",4:"quarter",2:"eighth",1:"16th"})[duration];
+  if(!type)continue;
+  const dur=duration;
   if(beat+dur>16){flush(measure++);beat=0;}
   const alter=m[2]==="#"?1:m[2]==="b"?-1:0;
   measureNotes.push("<note><pitch><step>"+m[1]+"</step>"+(alter?("<alter>"+alter+"</alter>"):"")+"<octave>"+m[3]+"</octave></pitch><duration>"+dur+"</duration><type>"+type+"</type></note>");

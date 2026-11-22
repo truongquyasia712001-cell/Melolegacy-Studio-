@@ -33,3 +33,6 @@ jobs:
           Path("/tmp/composer-room-check.js").write_text("\n".join(scripts), encoding="utf-8")
           PY
           node --check /tmp/composer-room-check.js
+
+      - name: Test Composer Room MusicXML duration export
+        run: node app/composer-room/test-musicxml.js
