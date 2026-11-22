@@ -1,0 +1,26 @@
+name: MeloLegacy AI Core tests
+
+on:
+  pull_request:
+    branches: [ai-core-bootstrap, main]
+  push:
+    branches: [ai-core-bootstrap, main, melobot-memory-v0]
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile AI Core
+        run: python -m compileall -q ai/core
+      - name: Run AI Core tests
+        working-directory: ai/core
+        run: python -m unittest discover -p 'test_*.py' -v
