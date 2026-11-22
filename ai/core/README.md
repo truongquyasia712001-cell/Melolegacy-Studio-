@@ -1,28 +1,25 @@
-# MeloLegacy AI Core — policy, memory, and orchestration prototypes
+# MeloLegacy AI Core — policy, memory, orchestration, and network registry prototypes
 
-This directory contains the first bounded components of the MeloLegacy AI control plane.
+This directory contains bounded components for the MeloLegacy control plane.
 
 ## Current scope
 
-- `policy.py` classifies proposed operations as:
-  - `ALLOW`: bounded autonomous work.
-  - `REQUIRE_APPROVAL`: sensitive, production, or irreversible work.
-  - `DENY`: secret exposure, policy bypass, or unknown operations.
-- `memory.py` provides a versioned SQLite knowledge store and a read-only retrieval adapter.
-- `orchestrator.py` exposes that adapter through a Melobot-controlled retrieval method and records retrieval events.
-- `test_policy.py`, `test_memory.py`, and `test_orchestrator.py` cover the policy, memory, and retrieval boundary.
+- `policy.py` classifies proposed operations as allow, require approval, or deny.
+- `memory.py` provides versioned SQLite knowledge storage with provenance and rights metadata.
+- `orchestrator.py` exposes knowledge retrieval through the Melobot-controlled task conveyor and records events.
+- `node_registry.py` catalogs independently owned network nodes without contacting their endpoints or storing credentials.
+- Tests cover policy, memory, orchestration, and node-registry boundaries.
 
-The memory provider is now connected to the Python task-conveyor interface in source and covered by integration tests. This is not yet a deployed agent, scheduler, authenticated network service, production controller, or cloud memory service.
+New network nodes remain pending until Guardian verification. Only active nodes are discoverable. The registry is metadata-only: it does not connect, authenticate, synchronize, or transfer data to partner nodes.
 
-## Memory boundaries
+## Data and authority boundaries
 
 - Project knowledge and operational memory are supported.
 - Shared heritage requires provenance, explicit licensing/rights metadata, and reviewed/verified status.
-- Private user/student legacy is excluded from this shared store and must remain separately access-controlled.
-- Each revision is a new version; previous records remain retrievable.
-- Melobot retrieves knowledge through the conveyor; specialist agents do not receive a direct retrieval interface.
-
-The current `requested_by="melobot"` check is an in-process logical guard, not cryptographic authentication. Do not expose this interface directly over a network until trusted caller authentication and Guardian enforcement are implemented.
+- Private user/student legacy is excluded from the shared store.
+- Melobot is the sole task issuer and dispatcher; specialist agents cannot independently select tasks or call external systems.
+- Node owners retain independent data ownership. Melobot stores only approved connection metadata.
+- The current actor-name checks are in-process logical guards, not cryptographic authentication. Do not expose these prototypes as network authorization boundaries.
 
 See [Melo Memory v0 implementation note](../../docs/melo-memory-v0.md).
 
@@ -31,18 +28,23 @@ See [Melo Memory v0 implementation note](../../docs/melo-memory-v0.md).
 From the repository root:
 
 ```bash
+python -m compileall -q ai/core
 python -m unittest discover -s ai/core -p 'test_*.py' -v
 ```
 
-No third-party Python dependency is required for these prototypes.
+No third-party Python dependency is required for these prototypes. A GitHub Actions workflow runs compilation and tests for pull requests targeting the integration or main branches.
 
-## Next implementation stages
+## Not production ready
 
-1. Add authenticated, least-privilege knowledge retrieval and Guardian enforcement.
-2. Persist versioned task/event records in a durable audit store.
-3. Add a planner that emits structured task plans.
-4. Route every tool call through the policy gate and approval flow.
-5. Add Colab/training adapter with dataset, runtime, and cost limits.
-6. Add evaluation and monitoring before any production integration.
+No authenticated network API, per-node mTLS, per-user ACL, encryption-at-rest, backup automation, distributed synchronization, external endpoint verification, semantic search, or deployed Melobot service is included. The node registry does not contact external organizations or endpoints.
 
-Do not put API keys, passwords, cookies, or student data in this directory or in Git. Production deployment, private data operations, and external integrations remain approval-gated.
+## Fast-track next steps
+
+1. Add authenticated identity and Guardian approval before exposing any API.
+2. Define a versioned node handshake contract (capabilities, protocol versions, data rights, retention, and audit fields).
+3. Add a read-only node discovery API after the authentication boundary is reviewed.
+4. Persist task/audit events and implement backup/restore tests.
+5. Connect the PDF-to-MusicXML pipeline to the same task interface behind capability-specific permissions.
+6. Run CI and resolve failures before requesting review or merge.
+
+Do not put API keys, passwords, cookies, private student data, or partner datasets in Git. Production deployment, private data operations, external integrations, and merges remain approval-gated.
