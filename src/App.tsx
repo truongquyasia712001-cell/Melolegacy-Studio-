@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { LocalLibrary } from './music/LocalLibrary'
 import type { LocalScoreDocument } from './music/localStore'
 import { parseMusicXml } from './music'
+import { recognizePdfWithMelobot } from './music/recognitionApi'
 import type { Score } from './music'
 import { PianoPlayback } from './music/PianoPlayback'
 import './App.css'
@@ -87,7 +88,20 @@ export default function App() {
     if (/\.(xml|musicxml)$/i.test(file.name)) {
       try { setScore(parseMusicXml(await file.text()).score); setNotice('Đã mở MusicXML: ' + file.name) }
       catch (error) { setNotice(error instanceof Error ? error.message : 'Không đọc được MusicXML.') }
-    } else setNotice('Đã nhận tệp ' + file.name + '. Bộ nhận dạng PDF/ảnh/âm thanh sẽ được kết nối tiếp.')
+      return
+    }
+    if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
+      setNotice('Đang gửi PDF đến MeloBot để nhận dạng…')
+      try {
+        const musicxml = await recognizePdfWithMelobot(file)
+        setScore(parseMusicXml(musicxml).score)
+        setNotice('MeloBot đã trả MusicXML. Vui lòng đối chiếu bản nhận dạng với PDF gốc trước khi sử dụng.')
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : 'Không thể kết nối MeloBot.')
+      }
+      return
+    }
+    setNotice('Định dạng này chưa được nối với dịch vụ âm nhạc. Hiện hỗ trợ PDF và MusicXML.')
   }
   function addMeasure() {
     setMeasures(old => [...old, { id: old.length + 1, notes: [] }])
