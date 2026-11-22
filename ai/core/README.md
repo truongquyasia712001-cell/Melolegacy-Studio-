@@ -1,6 +1,6 @@
-# MeloLegacy AI Core — policy prototype
+# MeloLegacy AI Core — policy and memory prototypes
 
-This directory starts the deterministic safety and autonomy layer for MeloLegacy AI.
+This directory contains the first bounded components of the MeloLegacy AI control plane.
 
 ## Current scope
 
@@ -8,9 +8,19 @@ This directory starts the deterministic safety and autonomy layer for MeloLegacy
   - `ALLOW`: bounded autonomous work.
   - `REQUIRE_APPROVAL`: sensitive, production, or irreversible work.
   - `DENY`: secret exposure, policy bypass, or unknown operations.
-- `test_policy.py` verifies the policy behavior using Python's standard library.
+- `memory.py` provides a versioned SQLite knowledge store and a read-only retrieval adapter for future Melobot integration.
+- `test_policy.py` and `test_memory.py` verify policy and memory behavior using Python's standard library.
 
-This is a policy prototype, not yet a connected agent, scheduler, memory service, or production controller. It does not execute tools or access credentials.
+The memory adapter is not yet connected to a running orchestrator. This directory does not yet provide a deployed agent, scheduler, production controller, account authentication, or cloud memory service.
+
+## Memory boundaries
+
+- Project knowledge and operational memory are supported.
+- Shared heritage requires provenance, explicit licensing/rights metadata, and reviewed/verified status.
+- Private user/student legacy is excluded from this shared store and must remain separately access-controlled.
+- Each revision is a new version; previous records remain retrievable.
+
+See [Melo Memory v0 implementation note](../../docs/melo-memory-v0.md).
 
 ## Run tests
 
@@ -20,14 +30,16 @@ From the repository root:
 python -m unittest discover -s ai/core -p 'test_*.py' -v
 ```
 
+No third-party Python dependency is required for these prototypes.
+
 ## Next implementation stages
 
-1. Add a versioned task/event schema and append-only audit store.
-2. Add read-only GitHub knowledge retrieval.
+1. Connect read-only memory retrieval to the Melobot orchestrator on an isolated branch.
+2. Add versioned task/event records and an append-only audit trail.
 3. Add a planner that emits structured task plans.
-4. Route every tool call through this policy gate.
-5. Add approval handling and a sandboxed GitHub branch writer.
+4. Route every tool call through the policy gate and Guardian approval flow.
+5. Add authenticated, least-privilege knowledge retrieval.
 6. Add Colab/training adapter with dataset, runtime, and cost limits.
 7. Add evaluation and monitoring before any production integration.
 
-Do not put API keys, passwords, cookies, or student data in this directory or in Git.
+Do not put API keys, passwords, cookies, or student data in this directory or in Git. Production deployment, private data operations, and external integrations remain approval-gated.
