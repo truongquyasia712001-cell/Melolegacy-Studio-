@@ -4,7 +4,7 @@ This service is an internal worker adapter, not a public upload API. It accepts 
 
 ## Engine
 
-Uses the Apache-2.0 `score-reader` package and its published model weights. The dependency is pinned to `score-reader[pdf]==0.1.7` for repeatable builds. Upstream documents Python 3.10/3.11, Java 17+, PDF/image input, and MusicXML export. The worker image uses Python 3.11 and Java 17 to match that runtime.
+Uses the Apache-2.0 `score-reader` package and its published model weights. The dependency is pinned to `score-reader[pdf]==0.1.7` for repeatable builds. Upstream documents Python 3.10/3.11 and Java 17+, plus PDF/image input and MusicXML export. The worker image uses Python 3.11 and OpenJDK 21, which satisfies the upstream Java 17+ requirement.
 
 Upstream reference: https://github.com/Luckolite/Sheet-Music-Recognition
 PyPI release: https://pypi.org/project/score-reader/0.1.7/
