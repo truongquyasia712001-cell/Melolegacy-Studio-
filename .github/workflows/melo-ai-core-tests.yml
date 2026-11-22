@@ -48,3 +48,26 @@ jobs:
           node --check /tmp/composer-room-check.js
       - name: Test Composer Room MusicXML duration export
         run: node app/composer-room/test-musicxml.js
+
+  omr-worker-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Build pinned OMR worker image
+        run: docker build -t melo-omr-ci services/omr-worker
+      - name: Verify score-reader CLI is installed
+        run: docker run --rm melo-omr-ci score-reader --help
+      - name: Verify private worker starts and reports health
+        run: |
+          docker run -d --name melo-omr-ci -p 127.0.0.1:8000:8000 \
+            -e MELOBOT_OMR_TOKEN=ci-only-secret melo-omr-ci
+          trap 'docker rm -f melo-omr-ci >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs melo-omr-ci
+          exit 1
