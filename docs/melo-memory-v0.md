@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Provide a small, durable, versioned knowledge store that a future Melobot orchestrator can query. This is the first bounded implementation step; it is not a deployed memory service and is not yet wired into a running orchestrator.
+Provide a small, durable, versioned knowledge store that Melobot can query through its task-conveyor interface. This is a bounded prototype, not a deployed memory service.
 
 ## Included in v0
 
@@ -11,7 +11,8 @@ Provide a small, durable, versioned knowledge store that a future Melobot orches
 - Retrieval of the latest version and full revision history by logical key.
 - Keyword retrieval over the latest version of each record.
 - Provenance fields: source URI/label, license identifier, rights status, verification status, creator, and JSON metadata.
-- A read-only `MeloKnowledgeProvider` adapter intended as the retrieval seam for Melobot.
+- A read-only `MeloKnowledgeProvider` adapter connected to `MelobotConveyor.retrieve_knowledge`.
+- Retrieval events record the result count and a hash of the query, not the raw query text.
 
 ## Data boundaries
 
@@ -40,11 +41,12 @@ The module has no third-party package dependency.
 
 - Keyword search only; no embeddings or semantic retrieval.
 - SQLite is a local persistence prototype, not distributed storage or multi-node synchronization.
-- No authentication, per-user ACL, encryption-at-rest, backup automation, retention controls, or tamper-evident external audit.
+- No authenticated caller identity, per-user ACL, encryption-at-rest, backup automation, retention controls, or tamper-evident external audit.
+- The current `requested_by="melobot"` check is an in-process logical guard, not cryptographic authentication. It must not be exposed as a network authorization boundary.
 - Append-only behavior is enforced by the module API, not by a cryptographically immutable database.
-- The adapter is a read-only interface seam; no live Melobot task engine currently consumes it.
-- Production use requires Guardian authorization, authenticated callers, storage/backup design, migration policy, and security review.
+- The adapter is connected to the Python conveyor interface, but no live deployed Melobot service consumes it yet.
+- Production use requires Guardian enforcement, authenticated callers, storage/backup design, migration policy, and security review.
 
 ## Next gated step
 
-Connect the read-only provider to the Melobot orchestrator on an isolated branch, with retrieval limited to approved project and operational domains. Keep private legacy excluded. Run integration tests and inspect retrieval traces. Production deployment, external integrations, paid infrastructure, and changes to user/student data remain approval-gated.
+Implement authenticated, least-privilege access and Guardian enforcement around the retrieval interface; persist task and retrieval events; then run integration tests. Keep private legacy excluded. Production deployment, external integrations, paid infrastructure, and changes to user/student data remain approval-gated.
