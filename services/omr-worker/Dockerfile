@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
-RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre-headless \
+RUN apt-get update && apt-get install -y --no-install-recommends openjdk-21-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /srv/omr
 COPY requirements.txt .
