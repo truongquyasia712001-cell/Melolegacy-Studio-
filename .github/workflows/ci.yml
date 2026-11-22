@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, feature/melo-music-recognition-engine]
+    branches: [main, feature/melo-music-recognition-engine, integration/unified-pwa-mainline]
 
 permissions:
   contents: read
