@@ -24,6 +24,16 @@ def require_melobot(token: str, task_id: str) -> None:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="A valid Melobot task ID is required.") from exc
 
+def has_recognized_notation(root: ET.Element) -> bool:
+    """Reject structurally valid but musically empty MusicXML output."""
+    for element in root.iter():
+        if element.tag.split("}")[-1] != "note":
+            continue
+        child_tags = {child.tag.split("}")[-1] for child in element.iter()}
+        if "pitch" in child_tags or "rest" in child_tags or "unpitched" in child_tags:
+            return True
+    return False
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "role": "internal-omr-worker"}
@@ -62,6 +72,8 @@ async def convert_pdf(
             raise HTTPException(status_code=502, detail="OMR produced invalid MusicXML.") from exc
         if root.tag.split("}")[-1] not in {"score-partwise", "score-timewise"}:
             raise HTTPException(status_code=502, detail="OMR output is not a MusicXML score.")
+        if not has_recognized_notation(root):
+            raise HTTPException(status_code=422, detail="OMR produced an empty score; review the PDF quality or try another scan.")
         return FileResponse(output_xml, media_type="application/vnd.recordare.musicxml+xml",
             filename="melolegacy-recognized.musicxml",
             headers={"X-OMR-Review-Required":"true","X-Melobot-Task-Id":x_melobot_task_id},
