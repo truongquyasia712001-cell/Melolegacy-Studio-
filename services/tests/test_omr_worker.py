@@ -40,7 +40,7 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         headers["X-Melobot-Token"] = "wrong"
         response = self.client.post(
             "/v1/convert",
-            files={"file": ("score.pdf", b"%PDF-1.7\\nsource", "application/pdf")},
+            files={"file": ("score.pdf", b"%PDF-1.7\nsource", "application/pdf")},
             headers=headers,
         )
         self.assertEqual(response.status_code, 403)
@@ -62,7 +62,7 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         with patch.object(worker.subprocess, "run", side_effect=fake_score_reader) as run:
             response = self.client.post(
                 "/v1/convert",
-                files={"file": ("score.pdf", b"%PDF-1.7\\nvalid-test-pdf", "application/pdf")},
+                files={"file": ("score.pdf", b"%PDF-1.7\nvalid-test-pdf", "application/pdf")},
                 headers=self.headers,
             )
 
@@ -80,7 +80,7 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         with patch.object(worker.subprocess, "run", side_effect=fake_score_reader):
             response = self.client.post(
                 "/v1/convert",
-                files={"file": ("score.pdf", b"%PDF-1.7\\nvalid-test-pdf", "application/pdf")},
+                files={"file": ("score.pdf", b"%PDF-1.7\nvalid-test-pdf", "application/pdf")},
                 headers=self.headers,
             )
 
