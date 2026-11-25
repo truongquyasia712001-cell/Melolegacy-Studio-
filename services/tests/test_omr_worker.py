@@ -20,7 +20,11 @@ assert spec and spec.loader
 spec.loader.exec_module(worker)
 
 VALID_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0"><part-list/><part id="P1"/></score-partwise>"""
+<score-partwise version="4.0"><part-list/><part id="P1"><measure number="1">
+<note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note>
+</measure></part></score-partwise>"""
+EMPTY_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0"><part-list/><part id="P1"><measure number="1"/></part></score-partwise>"""
 
 
 class OMRWorkerBoundaryTests(unittest.TestCase):
@@ -36,7 +40,7 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         headers["X-Melobot-Token"] = "wrong"
         response = self.client.post(
             "/v1/convert",
-            files={"file": ("score.pdf", b"%PDF-1.7\nsource", "application/pdf")},
+            files={"file": ("score.pdf", b"%PDF-1.7\\nsource", "application/pdf")},
             headers=headers,
         )
         self.assertEqual(response.status_code, 403)
@@ -58,7 +62,7 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         with patch.object(worker.subprocess, "run", side_effect=fake_score_reader) as run:
             response = self.client.post(
                 "/v1/convert",
-                files={"file": ("score.pdf", b"%PDF-1.7\nvalid-test-pdf", "application/pdf")},
+                files={"file": ("score.pdf", b"%PDF-1.7\\nvalid-test-pdf", "application/pdf")},
                 headers=self.headers,
             )
 
@@ -66,6 +70,22 @@ class OMRWorkerBoundaryTests(unittest.TestCase):
         self.assertEqual(response.headers.get("X-OMR-Review-Required"), "true")
         self.assertIn(b"<score-partwise", response.content)
         self.assertEqual(run.call_count, 1)
+
+    def test_rejects_empty_musicxml_result(self):
+        def fake_score_reader(command, **_kwargs):
+            xml_path = Path(command[command.index("--musicxml") + 1])
+            xml_path.write_bytes(EMPTY_XML)
+            return subprocess.CompletedProcess(command, 0, "", "")
+
+        with patch.object(worker.subprocess, "run", side_effect=fake_score_reader):
+            response = self.client.post(
+                "/v1/convert",
+                files={"file": ("score.pdf", b"%PDF-1.7\\nvalid-test-pdf", "application/pdf")},
+                headers=self.headers,
+            )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertIn("empty score", response.json()["detail"])
 
 
 if __name__ == "__main__":
