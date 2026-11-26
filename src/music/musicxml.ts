@@ -1,4 +1,4 @@
-import type { Measure, ParseSummary, Pitch, Score, ScoreEvent, ScorePart, Step } from './model'
+import type { Measure, ParseSummary, Pitch, Score, ScorePart, Step } from './model'
 import { pitchToMidi } from './model'
 import { resolveNoteOnsets, type MusicXmlTimelineItem } from './musicxml-timing.mjs'
 
