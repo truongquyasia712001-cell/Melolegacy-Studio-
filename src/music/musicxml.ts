@@ -1,5 +1,6 @@
 import type { Measure, ParseSummary, Pitch, Score, ScoreEvent, ScorePart, Step } from './model'
 import { pitchToMidi } from './model'
+import { resolveNoteOnsets, type MusicXmlTimelineItem } from './musicxml-timing.mjs'
 
 function text(parent: ParentNode, selector: string, fallback = ''): string {
   return parent.querySelector(selector)?.textContent?.trim() || fallback
@@ -33,30 +34,51 @@ function parseMeasure(element: Element, fallbackNumber: number, inheritedDivisio
     ...(key ? { key: { fifths: number(key, 'fifths'), mode: text(key, 'mode') || undefined } } : {}),
     ...(clef ? { clef: { sign: text(clef, 'sign', 'G'), line: number(clef, 'line', 2), octaveChange: number(clef, 'clef-octave-change') || undefined } } : {}),
   }
-  let cursor = 0
-  let divisions = measure.divisions || 1
-  for (const item of children(element, 'note')) {
-    if (item.querySelector('grace')) continue
+
+  const timeline: MusicXmlTimelineItem[] = []
+  const noteNodes: Array<{ element: Element; duration: number }> = []
+  let currentDivisions = measure.divisions || 1
+
+  for (const item of Array.from(element.children)) {
+    if (item.localName === 'attributes') {
+      const declaredDivisions = number(item, 'divisions')
+      if (declaredDivisions > 0) currentDivisions = declaredDivisions
+      continue
+    }
+    if (item.localName === 'backup' || item.localName === 'forward') {
+      const durationTicks = number(item, 'duration')
+      timeline.push({
+        kind: item.localName,
+        duration: durationTicks > 0 ? durationTicks / currentDivisions : 0,
+      })
+      continue
+    }
+    if (item.localName !== 'note' || item.querySelector('grace')) continue
+
     const durationTicks = number(item, 'duration')
-    const duration = durationTicks > 0 ? durationTicks / divisions : 0
-    const isChord = Boolean(item.querySelector('chord'))
-    const onset = isChord ? Math.max(0, cursor - (measure.events.at(-1)?.duration || 0)) : cursor
-    const isRest = Boolean(item.querySelector('rest'))
-    const event: ScoreEvent = {
-      id: `${measure.number}-${measure.events.length + 1}`,
+    const duration = durationTicks > 0 ? durationTicks / currentDivisions : 0
+    const isChord = Boolean(item.querySelector(':scope > chord'))
+    timeline.push({ kind: 'note', duration, chord: isChord })
+    noteNodes.push({ element: item, duration })
+  }
+
+  const noteOnsets = resolveNoteOnsets(timeline)
+  noteNodes.forEach(({ element: item, duration }, index) => {
+    const isRest = Boolean(item.querySelector(':scope > rest'))
+    const pitch = parsePitch(item)
+    measure.events.push({
+      id: measure.number + '-' + (measure.events.length + 1),
       kind: isRest ? 'rest' : 'note',
-      onset,
+      onset: noteOnsets[index] ?? 0,
       duration,
-      ...(parsePitch(item) ? { pitch: parsePitch(item) } : {}),
+      ...(pitch ? { pitch } : {}),
       ...(text(item, 'voice') ? { voice: text(item, 'voice') } : {}),
       ...(number(item, 'staff') ? { staff: number(item, 'staff') } : {}),
       tieStart: Boolean(item.querySelector('tie[type="start"]')),
       tieStop: Boolean(item.querySelector('tie[type="stop"]')),
       articulations: Array.from(item.querySelectorAll('articulations > *')).map(node => node.localName),
-    }
-    measure.events.push(event)
-    if (!isChord) cursor += duration
-  }
+    })
+  })
   return measure
 }
 
