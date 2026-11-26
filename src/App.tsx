@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { LocalLibrary } from './music/LocalLibrary'
 import type { LocalScoreDocument } from './music/localStore'
-import { parseMusicXml } from './music'
+import { parseMidi, parseMusicXml } from './music'
 import { recognizePdfWithMelobot } from './music/recognitionApi'
 import type { Score } from './music'
 import { PianoPlayback } from './music/PianoPlayback'
@@ -90,6 +90,16 @@ export default function App() {
       catch (error) { setNotice(error instanceof Error ? error.message : 'Không đọc được MusicXML.') }
       return
     }
+    if (/\.(mid|midi)$/i.test(file.name) || file.type === 'audio/midi' || file.type === 'audio/x-midi') {
+      try {
+        const parsed = parseMidi(await file.arrayBuffer())
+        setScore(parsed.score)
+        setNotice('Đã mở MIDI: ' + file.name + '. Kiểm tra các bè, nhịp và cao độ trước khi tiếp tục.')
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : 'Không đọc được tệp MIDI.')
+      }
+      return
+    }
     if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
       setNotice('Đang gửi PDF đến MeloBot để nhận dạng…')
       try {
@@ -157,7 +167,7 @@ export default function App() {
       </nav>
       <div className="pinned-right">
         <ActionButton name="upload" label="Tải lên" onClick={() => uploadRef.current?.click()}/>
-        <input ref={uploadRef} type="file" hidden accept=".musicxml,.xml,.mid,.midi,.pdf,.png,.jpg,.jpeg,.webp,.wav,.mp3,.m4a" onChange={e => { void importScore(e.currentTarget.files?.[0]); e.currentTarget.value = '' }}/>
+        <input ref={uploadRef} type="file" hidden accept=".musicxml,.xml,.mid,.midi,.pdf" onChange={e => { void importScore(e.currentTarget.files?.[0]); e.currentTarget.value = '' }}/>
         <div className="export-anchor">
           <ActionButton name="share" label="Gửi, xuất hoặc tải xuống" active={exportOpen} onClick={() => setExportOpen(v => !v)}/>
           {exportOpen && <div className="export-popover"><button onClick={() => exportAction('share')}>Chia sẻ bản nhạc</button><button onClick={() => exportAction('download')}>Xuất / Tải xuống</button><button onClick={() => exportAction('print')}>In hoặc lưu PDF</button></div>}
