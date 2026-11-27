@@ -69,6 +69,7 @@ export default function App() {
   const [zoom, setZoom] = useState(86)
   const [pianoOpen, setPianoOpen] = useState(false)
   const [score, setScore] = useState<Score | null>(null)
+  const [omrNeedsReview, setOmrNeedsReview] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [notice, setNotice] = useState('')
   const [measures, setMeasures] = useState<Measure[]>(initialMeasures)
@@ -111,6 +112,7 @@ export default function App() {
       try {
         const original = await saveOriginal(file, 'musicxml')
         await saveNormalizedScore(await file.text(), original.id)
+        setOmrNeedsReview(false)
         setNotice('Đã lưu bản gốc và bản MusicXML chuẩn hóa vào thư viện: ' + file.name)
       } catch (error) { setNotice(error instanceof Error ? error.message : 'Không đọc được hoặc không thể lưu MusicXML.') }
       return
@@ -120,6 +122,7 @@ export default function App() {
         await saveOriginal(file, 'midi')
         const parsed = parseMidi(await file.arrayBuffer())
         setScore(parsed.score)
+        setOmrNeedsReview(false)
         setNotice('Đã lưu bản MIDI gốc vào thư viện và mở dữ liệu đọc được. Kiểm tra các bè, nhịp và cao độ trước khi tiếp tục.')
       } catch (error) {
         setNotice(error instanceof Error ? error.message : 'Không đọc được tệp MIDI.')
@@ -132,6 +135,7 @@ export default function App() {
         const original = await saveOriginal(file, 'pdf')
         const musicxml = await recognizePdfWithMelobot(file)
         await saveNormalizedScore(musicxml, original.id)
+        setOmrNeedsReview(true)
         setNotice('Đã lưu PDF gốc và MusicXML nhận dạng vào thư viện. Vui lòng đối chiếu bản nhận dạng với PDF gốc trước khi sử dụng.')
       } catch (error) {
         setNotice(error instanceof Error ? error.message : 'Không thể kết nối MeloBot.')
@@ -209,6 +213,7 @@ export default function App() {
           {score ? <ScoreStaffPreview score={score} /> : Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
         </div>
         {notice && <div className="status-toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng"><Icon name="close"/></button></div>}
+        {omrNeedsReview && <div className="status-toast" role="alert"><b>OMR · CHƯA ĐƯỢC XÁC MINH</b><span>Kết quả nhận dạng chỉ là bản nháp. Hãy đối chiếu từng khuông, khóa nhạc, dấu hóa, cao độ, trường độ, nhịp, dấu lặng và từng bè với PDF gốc. Không dùng làm bản chính thức hoặc đem xuất bản khi chưa được người có chuyên môn kiểm tra.</span></div>}
         {score && <div className="loaded-score"><b>{score.title || 'Bản nhạc đã mở'}</b><span>{score.parts.length} bè · MusicXML</span><PianoPlayback score={score}/></div>}
         {pianoOpen && <div className="piano-panel"><div className="piano-heading"><b>Piano</b><ActionButton name="close" label="Đóng piano" onClick={() => setPianoOpen(false)}/></div><div className="piano-keys">{Array.from({length:28},(_,i)=><button type="button" key={i} className={[1,3,6,8,10,13,15,18,20,22,25,27].includes(i)?'black-key':''} aria-label="Phím piano"/>)}</div><div className="octave-row"><span>Quãng 3</span><span>Quãng 4</span><span>Quãng 5</span></div></div>}
       </section>
