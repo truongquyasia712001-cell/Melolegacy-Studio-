@@ -7,13 +7,13 @@ import {
   listLocalScores,
   requestPersistentLocalStorage,
   saveLocalAsset,
+  DEVICE_LOCAL_DEVICE_LOCAL_OWNER_ID,
   type LocalMusicAsset,
   type LocalAssetKind,
   type LocalStorageUsage,
   type LocalScoreDocument,
 } from './localStore'
 
-const OWNER_ID = 'device-local'
 const ACCEPTED = '.musicxml,.xml,.mid,.midi,.pdf,.png,.jpg,.jpeg,.webp,.wav,.mp3,.m4a,.flac'
 
 function kindFor(file: File): LocalAssetKind {
@@ -52,7 +52,7 @@ export function LocalLibrary({ onOpenScore }: { onOpenScore: (score: LocalScoreD
   const refresh = useCallback(async () => {
     setLoading(true)
     try {
-      const [items, savedScores, estimate] = await Promise.all([listLocalAssets(OWNER_ID), listLocalScores(OWNER_ID), getLocalStorageUsage()])
+      const [items, savedScores, estimate] = await Promise.all([listLocalAssets(DEVICE_LOCAL_OWNER_ID), listLocalScores(DEVICE_LOCAL_OWNER_ID), getLocalStorageUsage()])
       setAssets(items)
       setScores(savedScores)
       setUsage(estimate)
@@ -79,7 +79,7 @@ export function LocalLibrary({ onOpenScore }: { onOpenScore: (score: LocalScoreD
       let saved = 0
       for (const file of Array.from(files)) {
         await saveLocalAsset({
-          ownerId: OWNER_ID,
+          ownerId: DEVICE_LOCAL_OWNER_ID,
           title: file.name,
           kind: kindFor(file),
           mimeType: file.type || 'application/octet-stream',
@@ -100,7 +100,7 @@ export function LocalLibrary({ onOpenScore }: { onOpenScore: (score: LocalScoreD
   async function removeAsset(asset: LocalMusicAsset) {
     if (!window.confirm(`Xóa “${asset.title}” khỏi thiết bị này? Bản gốc sẽ không thể khôi phục từ kho cục bộ.`)) return
     try {
-      await deleteLocalAsset(asset.id, OWNER_ID)
+      await deleteLocalAsset(asset.id, DEVICE_LOCAL_OWNER_ID)
       setMessage(`Đã xóa ${asset.title} khỏi kho trên thiết bị.`)
       await refresh()
     } catch (reason) {
