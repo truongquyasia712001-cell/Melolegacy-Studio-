@@ -64,7 +64,7 @@ function ScorePage({ page, totalPages, measures, onMeasure, onAdd }: { page: num
   return <article className="a4-sheet">
     <span className="sheet-page-number">{page}</span>
     <div className="sheet-systems">
-      {Array.from({ length: 12 }, (_, row) => <StaffSystem key={row} row={row} first={page === 1 && row === 0} last={page === totalPages && row === 11} measures={measures.slice(row * 5, row * 5 + 5)} onMeasure={onMeasure} onAdd={onAdd}/>)}
+      {Array.from({ length: 10 }, (_, row) => <StaffSystem key={row} row={row} first={page === 1 && row === 0} last={page === totalPages && row === 9} measures={measures.slice(row * 5, row * 5 + 5)} onMeasure={onMeasure} onAdd={onAdd}/>)}
     </div>
   </article>
 }
@@ -77,7 +77,7 @@ export default function App() {
   const [measures, setMeasures] = useState<Measure[]>(initialMeasures)
   const uploadRef = useRef<HTMLInputElement>(null)
   const scoreRef = useRef<HTMLDivElement>(null)
-  const pages = Math.max(1, Math.ceil(measures.length / 60))
+  const pages = Math.max(1, Math.ceil(measures.length / 50))
   async function saveOriginal(file: File, kind: 'musicxml' | 'midi' | 'pdf') {
     return saveLocalAsset({
       ownerId: DEVICE_LOCAL_OWNER_ID,
@@ -177,7 +177,7 @@ export default function App() {
       {libraryOpen && <aside className="library-panel"><div className="panel-title"><b>Thư viện nhạc</b><ActionButton name="close" label="Đóng thư viện" onClick={() => setLibraryOpen(false)}/></div><LocalLibrary onOpenScore={openSavedScore}/></aside>}
       <section className="paper-stage">
         <div className="paper-scroll" ref={scoreRef}>
-          {score ? <ScoreStaffPreview score={score} /> : Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
+          {score ? <ScoreStaffPreview score={score} /> : Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*50,(i+1)*50)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
         </div>
         {notice && <div className="status-toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng"><Icon name="close"/></button></div>}
         {omrNeedsReview && <div className="status-toast" role="alert"><b>OMR · CHƯA ĐƯỢC XÁC MINH</b><span>Kết quả nhận dạng chỉ là bản nháp. Hãy đối chiếu từng khuông, khóa nhạc, dấu hóa, cao độ, trường độ, nhịp, dấu lặng và từng bè với PDF gốc. Không dùng làm bản chính thức hoặc đem xuất bản khi chưa được người có chuyên môn kiểm tra.</span></div>}
