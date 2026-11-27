@@ -38,7 +38,8 @@ function Icon({name}:{name:string}) {
     redo:'m15 14 5-5-5-5m5 5H10a6 6 0 0 0 0 12h2',
     play:'m7 4 13 8-13 8z',
     piano:'M3 5h18v14H3zM7 5v9m5-9v9m5-9v9',
-    beat:'M4 21h16L17 4H7zM12 5v12m0-12 4-3m-4 3-4 6',
+    metronome:'M4 21h16L17 4H7zM12 5v12m0-12 4-3m-4 3-4 6',
+    beat:'M3 12h3l2-6 4 12 3-9 2 3h4',
     pdf:'M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h6',
     close:'M5 5l14 14M19 5 5 19'
   }
@@ -114,7 +115,7 @@ export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay,onSelectGl
       <button className="dock-tool" title="Làm lại" aria-label="Làm lại" onClick={onRedo}><Icon name="redo"/></button>
       <button className="dock-tool" title="Chạy/Dừng" aria-label="Chạy/Dừng" onClick={onPlay}><Icon name="play"/></button>
       <button className={'dock-tool '+(panel==='piano'?'active':'')} title="Piano" aria-label="Piano" onClick={()=>togglePanel('piano')}><Icon name="piano"/></button>
-      <button className={'dock-tool '+(panel==='metronome'?'active':'')} title="Máy nhịp" aria-label="Máy nhịp" onClick={()=>togglePanel('metronome')}><Icon name="beat"/></button>
+      <button className={'dock-tool '+(panel==='metronome'?'active':'')} title="Máy nhịp" aria-label="Máy nhịp" onClick={()=>togglePanel('metronome')}><Icon name="metronome"/></button>
       <button className={'dock-tool '+(panel==='beat'?'active':'')} title="Beat" aria-label="Beat" onClick={()=>togglePanel('beat')}><Icon name="beat"/></button>
       <button className="dock-tool" title="Nhận dạng PDF" aria-label="Nhận dạng PDF" onClick={onUploadPDF}><Icon name="pdf"/></button>
     </nav>
