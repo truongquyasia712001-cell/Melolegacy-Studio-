@@ -53,7 +53,7 @@ function StaffSystem({ row, first, last, measures, onMeasure, onAdd }: { row: nu
     <div className="measure-run">
       {measures.map((measure, index) => <button className="measure-cell" key={measure.id} type="button" onClick={() => onMeasure(measure.id)} aria-label={'Ô nhịp ' + measure.id}>
         <span className="staff-lines"><i/><i/><i/><i/><i/></span>
-        {measure.notes.map((note, i) => <span className="note-dot" key={i} style={{ left: (22 + i * 13) + '%', top: (48 - note * 5) + '%' }} />)}
+        {measure.notes.map((note, i) => <span className="note-dot" key={i} style={{ left: (22 + i * 13) + '%', top: (48 - note * 5) + '%' }}>{String.fromCodePoint(0xe0a4)}</span>)}
         {index === measures.length - 1 && last && <span className="measure-end-mark" />}
       </button>)}
       {last && <button className="add-measure" type="button" title="Thêm ô nhịp" aria-label="Thêm ô nhịp" onClick={onAdd}><Icon name="plus"/></button>}
