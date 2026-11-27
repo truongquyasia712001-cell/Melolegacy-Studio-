@@ -212,6 +212,7 @@ export default function App() {
         {notice && <div className="status-toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng"><Icon name="close"/></button></div>}
         {omrNeedsReview && <div className="status-toast" role="alert"><b>OMR · CHƯA ĐƯỢC XÁC MINH</b><span>Kết quả nhận dạng chỉ là bản nháp. Hãy đối chiếu từng khuông, khóa nhạc, dấu hóa, cao độ, trường độ, nhịp, dấu lặng và từng bè với PDF gốc. Không dùng làm bản chính thức hoặc đem xuất bản khi chưa được người có chuyên môn kiểm tra.</span></div>}
         {score && <div className="loaded-score"><b>{score.title || 'Bản nhạc đã mở'}</b><span>{score.parts.length} bè · MusicXML</span><PianoPlayback score={score}/></div>}
+        <ComposerToolBubbles onUploadPDF={() => uploadRef.current?.click()} onUndo={() => setNotice("Hoàn tác: cần nối lịch sử chỉnh sửa trước khi bật thao tác thật.")} onRedo={() => setNotice("Làm lại: cần nối lịch sử chỉnh sửa trước khi bật thao tác thật.")} onPlay={() => setNotice(score ? "Dùng trình phát của bản nhạc đã mở để phát toàn bộ tác phẩm." : "Hãy nhập bản nhạc trước khi phát.")}/>
       </section>
 
     </div>
