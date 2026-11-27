@@ -141,3 +141,5 @@
 .staff-svg .staff-notehead{font-size:19px;fill:#302b25}
 .staff-clef{font-family:'Bravura',serif}
 .note-dot{font-family:'Bravura',serif;font-size:18px;width:auto;height:auto;background:transparent;border-radius:0;transform:none;line-height:1}
+
+.note-dot::after{content:'';position:absolute;left:12px;bottom:1px;width:1.5px;height:18px;background:#302b25}
