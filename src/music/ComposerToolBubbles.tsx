@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-type Props = { onUploadPDF: () => void; onUndo?: () => void; onRedo?: () => void; onPlay?: () => void }
+type Props = { onUploadPDF: () => void; onUndo?: () => void; onRedo?: () => void; onPlay?: () => void; onSelectGlyph?: (label: string) => void }
 
 const glyph = (hex: string) => String.fromCodePoint(Number.parseInt(hex.replace('U+', ''), 16))
 const groups = [
@@ -61,9 +61,10 @@ function useAudio() {
   return { tone, close: async()=>{if(ref.current && ref.current.state!=='closed') await ref.current.close();ref.current=null} }
 }
 
-export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay}:Props) {
+export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay,onSelectGlyph}:Props) {
   const [panel,setPanel]=useState<'symbols'|'piano'|'metronome'|'beat'|null>(null)
   const [group,setGroup]=useState('notes')
+  const [selectedGlyph,setSelectedGlyph]=useState('')
   const [bpm,setBpm]=useState(96)
   const [meter,setMeter]=useState('4/4')
   const [running,setRunning]=useState(false)
@@ -99,7 +100,7 @@ export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay}:Props) {
       <header className="bubble-heading"><b>{panel==='symbols'?'Thư viện ký hiệu chuẩn':panel==='piano'?'Piano':panel==='metronome'?'Máy nhịp':'Beat'}</b><button onClick={()=>{stop();setPanel(null)}} aria-label="Đóng"><Icon name="close"/></button></header>
       {panel==='symbols' && <div className="symbol-browser">
         <nav className="symbol-groups">{groups.map(item=><button key={item.id} className={group===item.id?'active':''} onClick={()=>setGroup(item.id)}>{item.title}</button>)}</nav>
-        <div className="symbol-grid">{selected.items.map(([label,code])=><button key={code} title={label} aria-label={label} onClick={()=>{}}><span className="smufl-glyph">{glyph(code)}</span><small>{label}</small></button>)}</div>
+        <div className="symbol-grid">{selected.items.map(([label,code])=><button key={code} className={selectedGlyph===label?'selected':''} title={label} aria-label={label} aria-pressed={selectedGlyph===label} onClick={()=>{setSelectedGlyph(label);onSelectGlyph?.(label)}}><span className="smufl-glyph">{glyph(code)}</span><small>{label}</small></button>)}</div>
         <p className="bubble-note">Glyph lấy theo mã SMuFL từ registry MeloLegacy và hiển thị bằng font Bravura đã đóng gói.</p>
       </div>}
       {panel==='piano' && <><div className="piano-bubble-keys">{keys.map(key=><button key={key.midi} className={key.black?'black':''} onPointerDown={()=>audio.tone(440*Math.pow(2,(key.midi-69)/12),0.45,'sine',0.2)} title={key.label} aria-label={'Phím '+key.label}><span>{key.black?'':key.label}</span></button>)}</div><p className="bubble-note">Bàn phím thử âm · quãng 4</p></>}
