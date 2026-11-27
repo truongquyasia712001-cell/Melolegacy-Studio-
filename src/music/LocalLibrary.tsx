@@ -7,7 +7,7 @@ import {
   listLocalScores,
   requestPersistentLocalStorage,
   saveLocalAsset,
-  DEVICE_LOCAL_DEVICE_LOCAL_OWNER_ID,
+  DEVICE_LOCAL_OWNER_ID,
   type LocalMusicAsset,
   type LocalAssetKind,
   type LocalStorageUsage,
