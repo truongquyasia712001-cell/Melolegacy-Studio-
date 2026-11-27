@@ -12,19 +12,21 @@ function pitchY(event: ScoreEvent, clef: string, bottom: number): number | null 
   const diatonic = event.pitch.octave * 7 + stepOrder[event.pitch.step]
   return bottom - (diatonic - (baseOctave * 7 + baseStep)) * 5
 }
+function smufl(codepoint: number): string { return String.fromCodePoint(codepoint) }
 function accidental(alter: number): string {
-  return alter === 1 ? '♯' : alter === 2 ? '𝄪' : alter === -1 ? '♭' : alter === -2 ? '𝄫' : ''
+  return alter === 1 ? smufl(0xe262) : alter === 2 ? smufl(0xe263) : alter === -1 ? smufl(0xe260) : alter === -2 ? smufl(0xe264) : ''
 }
 function isDotted(duration: number): boolean {
   return [0.75, 1.5, 3, 6].some(value => Math.abs(duration - value) < 0.025)
 }
 function NoteGlyph({ event, x, y }: { event: ScoreEvent; x: number; y: number }) {
   if (event.kind === 'rest') {
-    const glyph = event.duration >= 3.5 ? '𝄻' : event.duration >= 1.75 ? '𝄼' : event.duration >= 0.85 ? '𝄽' : event.duration >= 0.4 ? '𝄾' : '𝄿'
+    const glyph = smufl(event.duration >= 3.5 ? 0xe4e3 : event.duration >= 1.75 ? 0xe4e4 : event.duration >= 0.85 ? 0xe4e5 : event.duration >= 0.4 ? 0xe4e6 : 0xe4e7)
     return <g><text x={x} y={y + 5} className="staff-rest" textAnchor="middle">{glyph}</text>{isDotted(event.duration) && <circle cx={x + 12} cy={y - 3} r="1.8" className="staff-dot" />}</g>
   }
   if (!event.pitch) return null
   const open = event.duration >= 1.75
+  const noteheadGlyph = smufl(event.duration >= 3.5 ? 0xe0a2 : open ? 0xe0a3 : 0xe0a4)
   const stemUp = y > 58
   const stemX = x + (stemUp ? 7 : -7)
   const stemEnd = y + (stemUp ? -32 : 32)
@@ -34,7 +36,7 @@ function NoteGlyph({ event, x, y }: { event: ScoreEvent; x: number; y: number })
     : Array.from({ length: flagCount }, (_, i) => `M ${stemX} ${stemEnd - i * 6} q -15 -7 -7 -17`).join(' ')
   return <g className="staff-note">
     {accidental(event.pitch.alter) && <text x={x - 17} y={y + 5} className="staff-accidental" textAnchor="middle">{accidental(event.pitch.alter)}</text>}
-    <ellipse cx={x} cy={y} rx="6.5" ry="4.7" transform={`rotate(-18 ${x} ${y})`} className={open ? 'notehead notehead-open' : 'notehead'} />
+    <text x={x} y={y + 5} textAnchor="middle" className="staff-notehead">{noteheadGlyph}</text>
     {event.duration < 3.5 && <line x1={stemX} y1={y} x2={stemX} y2={stemEnd} className="staff-stem" />}
     {flagCount > 0 && <path d={flagPath} className="staff-flag" />}
     {isDotted(event.duration) && <circle cx={x + 11} cy={y - 2} r="1.8" className="staff-dot" />}
@@ -65,7 +67,7 @@ function MeasureStaff({ measure, index }: { measure: Measure; index: number }) {
   }
   const keyFifths = measure.key?.fifths || 0
   const keySteps = keyFifths > 0 ? sharpOrder.slice(0, keyFifths) : flatOrder.slice(0, Math.abs(keyFifths))
-  const keySymbol = keyFifths > 0 ? '♯' : '♭'
+  const keySymbol = keyFifths > 0 ? smufl(0xe262) : smufl(0xe260)
   const keyY: Record<Step, number> = clef === 'F'
     ? { C: 64, D: 54, E: 44, F: 34, G: 59, A: 49, B: 39 }
     : { C: 54, D: 44, E: 34, F: 59, G: 49, A: 39, B: 29 }
@@ -76,7 +78,7 @@ function MeasureStaff({ measure, index }: { measure: Measure; index: number }) {
       {staffLines.map(y => <line key={y} x1="42" y1={y} x2="690" y2={y} className="staff-line" />)}
       <line x1="42" y1={top} x2="42" y2={bottom} className="staff-barline" />
       <line x1="690" y1={top} x2="690" y2={bottom} className="staff-barline" />
-      <text x="57" y="71" className="staff-clef">{clef === 'F' ? '𝄢' : clef === 'C' ? '𝄡' : '𝄞'}</text>
+      <text x="57" y="71" className="staff-clef">{clef === 'F' ? smufl(0xe062) : clef === 'C' ? smufl(0xe05c) : smufl(0xe050)}</text>
       {keySteps.map((step, i) => <text key={step} x={82 + i * 8} y={keyY[step] + 5} className="staff-key-sign">{keySymbol}</text>)}
       {time && <g className="staff-time"><text x="112" y="49">{time.beats}</text><text x="112" y="68">{time.beatType}</text></g>}
       {ledgerLines.map((line, i) => <line key={i} x1={line.x - 11} y1={line.y} x2={line.x + 11} y2={line.y} className="staff-ledger" />)}
