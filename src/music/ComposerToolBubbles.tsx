@@ -38,7 +38,7 @@ function Icon({name}:{name:string}) {
     redo:'m15 14 5-5-5-5m5 5H10a6 6 0 0 0 0 12h2',
     play:'m7 4 13 8-13 8z',
     piano:'M3 5h18v14H3zM7 5v9m5-9v9m5-9v9',
-    beat:'M4 19h16M6 16l2-11h8l2 11M12 5V2m0 3 4-3',
+    beat:'M4 21h16L17 4H7zM12 5v12m0-12 4-3m-4 3-4 6',
     pdf:'M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h6',
     close:'M5 5l14 14M19 5 5 19'
   }
@@ -88,8 +88,8 @@ export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay}:Props) {
     timer.current=window.setInterval(()=>tick(isBeat),60000/bpm)
     setRunning(true)
   }
-  useEffect(()=>()=>{stop();void audio.close()},[])
-  useEffect(()=>{if(!running)return;const wasBeat=panel==='metronome';stop();start(wasBeat);return()=>stop()},[bpm,meter])
+  useEffect(()=>()=>{if(timer.current!==null)window.clearInterval(timer.current);void audio.close()},[])
+  useEffect(()=>{if(!running)return;const wasBeat=panel==='metronome';stop();start(wasBeat);return()=>stop()},[bpm,meter,panel])
   const selected=groups.find(item=>item.id===group) || groups[0]
   return <div className="composer-dock">
     {panel && <section className={'composer-bubble composer-bubble-'+panel} aria-label="Công cụ Composer">
