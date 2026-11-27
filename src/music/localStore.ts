@@ -40,6 +40,8 @@ export interface LocalStorageUsage {
   percentUsed: number
 }
 
+export const DEVICE_LOCAL_OWNER_ID = 'device-local'
+
 const DB_NAME = 'melolegacy-local-library'
 const DB_VERSION = 1
 const ASSETS = 'assets'
@@ -148,6 +150,7 @@ export async function saveLocalScore(
     status: 'local',
   }
   await withStore(SCORES, 'readwrite', store => store.put(score))
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('melo-library-updated'))
   return score
 }
 
