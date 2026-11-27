@@ -71,6 +71,7 @@ export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay}:Props) {
   const audio=useAudio()
   const timer=useRef<number | null>(null)
   const beatRef=useRef(0)
+  const beatModeRef=useRef(false)
   const meterCount=meter==='6/8'?6:meter==='3/4'?3:4
   const stop=()=>{if(timer.current!==null)window.clearInterval(timer.current);timer.current=null;setRunning(false);setBeat(0);beatRef.current=0}
   const tick=(isBeat:boolean)=>{
@@ -84,13 +85,15 @@ export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay}:Props) {
   }
   const start=(isBeat:boolean)=>{
     stop()
+    beatModeRef.current=isBeat
     tick(isBeat)
     timer.current=window.setInterval(()=>tick(isBeat),60000/bpm)
     setRunning(true)
   }
   useEffect(()=>()=>{if(timer.current!==null)window.clearInterval(timer.current);void audio.close()},[])
-  useEffect(()=>{if(!running)return;const wasBeat=panel==='metronome';stop();start(wasBeat);return()=>stop()},[bpm,meter,panel])
+  useEffect(()=>{if(!running)return;const wasBeat=beatModeRef.current;stop();start(wasBeat);return()=>{if(timer.current!==null)window.clearInterval(timer.current)}},[bpm,meter])
   const selected=groups.find(item=>item.id===group) || groups[0]
+  const togglePanel=(next:'symbols'|'piano'|'metronome'|'beat')=>{stop();setPanel(panel===next?null:next)}
   return <div className="composer-dock">
     {panel && <section className={'composer-bubble composer-bubble-'+panel} aria-label="Công cụ Composer">
       <header className="bubble-heading"><b>{panel==='symbols'?'Thư viện ký hiệu chuẩn':panel==='piano'?'Piano':panel==='metronome'?'Máy nhịp':'Beat'}</b><button onClick={()=>{stop();setPanel(null)}} aria-label="Đóng"><Icon name="close"/></button></header>
@@ -105,13 +108,13 @@ export function ComposerToolBubbles({onUploadPDF,onUndo,onRedo,onPlay}:Props) {
     </section>}
     <nav className="composer-toolbar" aria-label="Thanh công cụ sáng tác">
       <button className="dock-tool active" title="Bút" aria-label="Bút"><Icon name="pen"/></button>
-      <button className={'dock-tool '+(panel==='symbols'?'active':'')} title="Nhóm ký hiệu" aria-label="Nhóm ký hiệu" onClick={()=>setPanel(panel==='symbols'?null:'symbols')}><Icon name="note"/></button>
+      <button className={'dock-tool '+(panel==='symbols'?'active':'')} title="Nhóm ký hiệu" aria-label="Nhóm ký hiệu" onClick={()=>togglePanel('symbols')}><Icon name="note"/></button>
       <button className="dock-tool" title="Hoàn tác" aria-label="Hoàn tác" onClick={onUndo}><Icon name="undo"/></button>
       <button className="dock-tool" title="Làm lại" aria-label="Làm lại" onClick={onRedo}><Icon name="redo"/></button>
       <button className="dock-tool" title="Chạy/Dừng" aria-label="Chạy/Dừng" onClick={onPlay}><Icon name="play"/></button>
-      <button className={'dock-tool '+(panel==='piano'?'active':'')} title="Piano" aria-label="Piano" onClick={()=>setPanel(panel==='piano'?null:'piano')}><Icon name="piano"/></button>
-      <button className={'dock-tool '+(panel==='metronome'?'active':'')} title="Máy nhịp" aria-label="Máy nhịp" onClick={()=>setPanel(panel==='metronome'?null:'metronome')}><Icon name="beat"/></button>
-      <button className={'dock-tool '+(panel==='beat'?'active':'')} title="Beat" aria-label="Beat" onClick={()=>setPanel(panel==='beat'?null:'beat')}><Icon name="beat"/></button>
+      <button className={'dock-tool '+(panel==='piano'?'active':'')} title="Piano" aria-label="Piano" onClick={()=>togglePanel('piano')}><Icon name="piano"/></button>
+      <button className={'dock-tool '+(panel==='metronome'?'active':'')} title="Máy nhịp" aria-label="Máy nhịp" onClick={()=>togglePanel('metronome')}><Icon name="beat"/></button>
+      <button className={'dock-tool '+(panel==='beat'?'active':'')} title="Beat" aria-label="Beat" onClick={()=>togglePanel('beat')}><Icon name="beat"/></button>
       <button className="dock-tool" title="Nhận dạng PDF" aria-label="Nhận dạng PDF" onClick={onUploadPDF}><Icon name="pdf"/></button>
     </nav>
   </div>
