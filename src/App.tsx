@@ -5,6 +5,7 @@ import { parseMidi, parseMusicXml } from './music'
 import { recognizePdfWithMelobot } from './music/recognitionApi'
 import type { Score } from './music'
 import { PianoPlayback } from './music/PianoPlayback'
+import { ScoreStaffPreview } from './music/ScoreStaffPreview'
 import './App.css'
 
 type Tool = 'pen' | 'text' | 'select' | 'piano'
@@ -179,7 +180,7 @@ export default function App() {
       <section className="paper-stage">
         <div className="stage-controls"><div className="stage-caption">MELO LEGACY <span>·</span> SCORE STUDIO</div><div className="zoom-tools"><ActionButton name="zoomOut" label="Thu nhỏ" onClick={() => setZoom(v => Math.max(55,v-5))}/><span>{zoom}%</span><ActionButton name="zoomIn" label="Phóng to" onClick={() => setZoom(v => Math.min(120,v+5))}/></div></div>
         <div className="paper-scroll" ref={scoreRef} style={{ '--paper-zoom': zoom / 100 } as CSSProperties}>
-          {Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
+          {score ? <ScoreStaffPreview score={score} /> : Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
         </div>
         {notice && <div className="status-toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng"><Icon name="close"/></button></div>}
         {score && <div className="loaded-score"><b>{score.title || 'Bản nhạc đã mở'}</b><span>{score.parts.length} bè · MusicXML</span><PianoPlayback score={score}/></div>}
