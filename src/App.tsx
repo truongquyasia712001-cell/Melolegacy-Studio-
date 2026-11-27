@@ -184,7 +184,6 @@ export default function App() {
     else if (action === 'share' && navigator.share) void navigator.share({ title: 'Melo Legacy', text: 'Bản nhạc từ Melo Legacy Studio' }).catch(() => undefined)
     else setNotice(action === 'download' ? 'Đang chuẩn bị chức năng xuất PDF/MusicXML.' : 'Thiết bị chưa hỗ trợ chia sẻ trực tiếp.')
   }
-  function setTool(tool: Tool) { setActiveTool(tool); setPianoOpen(tool === 'piano') }
   return <main className="editor-app">
     <header className="topbar composer-topbar">
       <div className="pinned-left">
