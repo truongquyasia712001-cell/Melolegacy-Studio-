@@ -9,7 +9,6 @@ import { ScoreStaffPreview } from './music/ScoreStaffPreview'
 import { ComposerToolBubbles } from './music/ComposerToolBubbles'
 import './App.css'
 
-type Tool = 'pen' | 'text' | 'select' | 'piano'
 type Measure = { id: number; notes: number[] }
 const initialMeasures: Measure[] = Array.from({ length: 60 }, (_, i) => ({ id: i + 1, notes: [] }))
 const iconPaths: Record<string, string> = {
@@ -70,17 +69,12 @@ function ScorePage({ page, totalPages, measures, onMeasure, onAdd }: { page: num
   </article>
 }
 export default function App() {
-  const [activeTool, setActiveTool] = useState<Tool>('pen')
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [score, setScore] = useState<Score | null>(null)
   const [omrNeedsReview, setOmrNeedsReview] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [notice, setNotice] = useState('')
   const [measures, setMeasures] = useState<Measure[]>(initialMeasures)
-  const [selectedMeasures, setSelectedMeasures] = useState<number[]>([])
-  const [clipboard, setClipboard] = useState<Measure[]>([])
-  const [insertMode, setInsertMode] = useState<'replace' | 'insert'>('insert')
-  const [activeMeasure, setActiveMeasure] = useState(1)
   const uploadRef = useRef<HTMLInputElement>(null)
   const scoreRef = useRef<HTMLDivElement>(null)
   const pages = Math.max(1, Math.ceil(measures.length / 60))
@@ -152,31 +146,8 @@ export default function App() {
     setNotice('Đã thêm ô nhịp mới.')
   }
   function chooseMeasure(id: number) {
-    setActiveMeasure(id)
-    if (activeTool === 'select') setSelectedMeasures(old => old.includes(id) ? old.filter(x => x !== id) : [...old, id])
-    else if (activeTool === 'pen') {
-      setMeasures(old => old.map(item => item.id === id ? { ...item, notes: [...item.notes, 0] } : item))
-      if (id % 5 === 0) requestAnimationFrame(() => scoreRef.current?.scrollBy({ top: 112, behavior: 'smooth' }))
-    }
-  }
-  function copySelection() {
-    const chosen = selectedMeasures.length ? selectedMeasures : [activeMeasure]
-    setClipboard(measures.filter(item => chosen.includes(item.id)).map(item => ({ ...item, notes: [...item.notes] })))
-    setNotice('Đã sao chép ' + chosen.length + ' ô nhịp.')
-  }
-  function pasteSelection() {
-    if (!clipboard.length) { setNotice('Chưa có nội dung để dán.'); return }
-    const chosen = [...selectedMeasures].sort((a,b)=>a-b)
-    if (insertMode === 'replace' && chosen.length !== clipboard.length) { setNotice('Để dán thay thế, hãy chọn đúng số ô nhịp bằng đoạn đã sao chép.'); return }
-    setMeasures(old => {
-      if (insertMode === 'replace') return old.map(item => { const index = chosen.indexOf(item.id); return index >= 0 ? { ...clipboard[index], id: item.id } : item })
-      const index = Math.max(0, old.findIndex(item => item.id === activeMeasure))
-      const next = [...old]
-      next.splice(index, 0, ...clipboard.map((item, i) => ({ ...item, id: activeMeasure + i })))
-      return next.map((item, i) => ({ ...item, id: i + 1 }))
-    })
-    setSelectedMeasures([])
-    setNotice(insertMode === 'replace' ? 'Đã dán thay thế vùng đã chọn.' : 'Đã chèn đoạn nhạc và đẩy các ô phía sau.')
+    setMeasures(old => old.map(item => item.id === id ? { ...item, notes: [...item.notes, 0] } : item))
+    if (id % 5 === 0) requestAnimationFrame(() => scoreRef.current?.scrollBy({ top: 112, behavior: 'smooth' }))
   }
   function exportAction(action: string) {
     setExportOpen(false)
