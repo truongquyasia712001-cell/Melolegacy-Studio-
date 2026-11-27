@@ -108,8 +108,11 @@ export default function App() {
   async function importScore(file?: File) {
     if (!file) return
     if (/\.(xml|musicxml)$/i.test(file.name)) {
-      try { setScore(parseMusicXml(await file.text()).score); setNotice('Đã mở MusicXML: ' + file.name) }
-      catch (error) { setNotice(error instanceof Error ? error.message : 'Không đọc được MusicXML.') }
+      try {
+        const original = await saveOriginal(file, 'musicxml')
+        await saveNormalizedScore(await file.text(), original.id)
+        setNotice('Đã lưu bản gốc và bản MusicXML chuẩn hóa vào thư viện: ' + file.name)
+      } catch (error) { setNotice(error instanceof Error ? error.message : 'Không đọc được hoặc không thể lưu MusicXML.') }
       return
     }
     if (/\.(mid|midi)$/i.test(file.name) || file.type === 'audio/midi' || file.type === 'audio/x-midi') {
