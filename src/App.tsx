@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useRef, useState } from 'react'
 import { LocalLibrary } from './music/LocalLibrary'
 import { DEVICE_LOCAL_OWNER_ID, saveLocalAsset, saveLocalScore, type LocalScoreDocument } from './music/localStore'
 import { parseMidi, parseMusicXml } from './music'
@@ -6,6 +6,7 @@ import { recognizePdfWithMelobot } from './music/recognitionApi'
 import type { Score } from './music'
 import { PianoPlayback } from './music/PianoPlayback'
 import { ScoreStaffPreview } from './music/ScoreStaffPreview'
+import { ComposerToolBubbles } from './music/ComposerToolBubbles'
 import './App.css'
 
 type Tool = 'pen' | 'text' | 'select' | 'piano'
@@ -13,6 +14,11 @@ type Measure = { id: number; notes: number[] }
 const initialMeasures: Measure[] = Array.from({ length: 60 }, (_, i) => ({ id: i + 1, notes: [] }))
 const iconPaths: Record<string, string> = {
   home: 'M3 10.5 12 3l9 7.5M5.5 9.5V21h13V9.5M9 21v-7h6v7',
+  compass: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM15.5 8.5l-2 5-5 2 2-5z',
+  mic: 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v4m-4 0h8',
+  camera: 'M3 7h4l2-3h6l2 3h4v13H3zM12 10a4 4 0 1 0 0 8 4 4 0 0 0 0-8z',
+  download: 'M12 3v12m-5-5 5 5 5-5M4 19v2h16v-2',
+  settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM19 13.5l2 1.2-2 3.5-2.2-1a8 8 0 0 1-2 .9L14.5 20h-5L9 18a8 8 0 0 1-2-.9l-2.2 1-2-3.5 2-1.2a8 8 0 0 1 0-2.3l-2-1.2 2-3.5L7 7.4a8 8 0 0 1 2-.9L9.5 4h5l.3 2.5a8 8 0 0 1 2 .9L19 6.5l2 3.5-2 1.2a8 8 0 0 1 0 2.3z',
   book: 'M4 5.5A3.5 3.5 0 0 1 7.5 2H21v18H7.5A3.5 3.5 0 0 0 4 23z M4 5.5V23 M8 6h9 M8 10h9',
   upload: 'M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5',
   share: 'M12 15V3m-5 5 5-5 5 5M5 13v7h14v-7',
@@ -66,8 +72,6 @@ function ScorePage({ page, totalPages, measures, onMeasure, onAdd }: { page: num
 export default function App() {
   const [activeTool, setActiveTool] = useState<Tool>('pen')
   const [libraryOpen, setLibraryOpen] = useState(false)
-  const [zoom, setZoom] = useState(86)
-  const [pianoOpen, setPianoOpen] = useState(false)
   const [score, setScore] = useState<Score | null>(null)
   const [omrNeedsReview, setOmrNeedsReview] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
@@ -80,7 +84,6 @@ export default function App() {
   const uploadRef = useRef<HTMLInputElement>(null)
   const scoreRef = useRef<HTMLDivElement>(null)
   const pages = Math.max(1, Math.ceil(measures.length / 60))
-  const toolLabel = useMemo(() => ({ pen: 'Bút', text: 'Chữ', select: 'Chọn vùng', piano: 'Piano' }[activeTool]), [activeTool])
   async function saveOriginal(file: File, kind: 'musicxml' | 'midi' | 'pdf') {
     return saveLocalAsset({
       ownerId: DEVICE_LOCAL_OWNER_ID,
@@ -183,49 +186,34 @@ export default function App() {
   }
   function setTool(tool: Tool) { setActiveTool(tool); setPianoOpen(tool === 'piano') }
   return <main className="editor-app">
-    <header className="topbar">
+    <header className="topbar composer-topbar">
       <div className="pinned-left">
-        <ActionButton name="home" label="Trang chủ Melo" onClick={() => setNotice('Khu vực hệ thống Melo')}/>
         <ActionButton name="book" label="Thư viện" active={libraryOpen} onClick={() => setLibraryOpen(v => !v)}/>
       </div>
-      <nav className="main-tools" aria-label="Công cụ soạn nhạc">
-        <ActionButton name="undo" label="Lùi thao tác" onClick={() => setNotice('Hoàn tác thao tác gần nhất.')}/>
-        <ActionButton name="redo" label="Tiến thao tác" onClick={() => setNotice('Làm lại thao tác.')}/>
-        <ActionButton name="pen" label="Bút" active={activeTool === 'pen'} onClick={() => setTool('pen')}/>
-        <ActionButton name="text" label="Viết chữ" active={activeTool === 'text'} onClick={() => setTool('text')}/>
-        <ActionButton name="select" label="Chọn vùng" active={activeTool === 'select'} onClick={() => setTool('select')}/>
-        <ActionButton name="piano" label="Piano" active={activeTool === 'piano'} onClick={() => setTool('piano')}/>
+      <nav className="main-tools" aria-label="Công cụ phía trên">
+        <ActionButton name="compass" label="Kim chỉ nam" onClick={() => setNotice('Hướng dẫn Composer')}/>
+        <ActionButton name="mic" label="Thu âm / ngân nga" onClick={() => setNotice('Thu âm giọng hát sẽ được nối với Sound Lab')}/>
+        <ActionButton name="camera" label="Chụp bản nhạc" onClick={() => uploadRef.current?.click()}/>
+        <ActionButton name="share" label="Chia sẻ / xuất / in" onClick={() => setExportOpen(v => !v)}/>
+        <ActionButton name="download" label="Tải xuống" onClick={() => setNotice('Xuất MusicXML/MIDI/PDF sẽ được mở rộng trong luồng xuất')}/>
       </nav>
       <div className="pinned-right">
-        <ActionButton name="upload" label="Tải lên" onClick={() => uploadRef.current?.click()}/>
+        <ActionButton name="settings" label="Cài đặt" onClick={() => setNotice('Cài đặt Composer')}/>
         <input ref={uploadRef} type="file" hidden accept=".musicxml,.xml,.mid,.midi,.pdf" onChange={e => { void importScore(e.currentTarget.files?.[0]); e.currentTarget.value = '' }}/>
-        <div className="export-anchor">
-          <ActionButton name="share" label="Gửi, xuất hoặc tải xuống" active={exportOpen} onClick={() => setExportOpen(v => !v)}/>
-          {exportOpen && <div className="export-popover"><button onClick={() => exportAction('share')}>Chia sẻ bản nhạc</button><button onClick={() => exportAction('download')}>Xuất / Tải xuống</button><button onClick={() => exportAction('print')}>In hoặc lưu PDF</button></div>}
-        </div>
+        {exportOpen && <div className="export-popover top-export"><button onClick={() => exportAction('share')}>Chia sẻ bản nhạc</button><button onClick={() => exportAction('download')}>Xuất / Tải xuống</button><button onClick={() => exportAction('print')}>In hoặc lưu PDF</button></div>}
       </div>
     </header>
     <div className="editor-body">
       {libraryOpen && <aside className="library-panel"><div className="panel-title"><b>Thư viện nhạc</b><ActionButton name="close" label="Đóng thư viện" onClick={() => setLibraryOpen(false)}/></div><LocalLibrary onOpenScore={openSavedScore}/></aside>}
       <section className="paper-stage">
-        <div className="stage-controls"><div className="stage-caption">MELO LEGACY <span>·</span> SCORE STUDIO</div><div className="zoom-tools"><ActionButton name="zoomOut" label="Thu nhỏ" onClick={() => setZoom(v => Math.max(55,v-5))}/><span>{zoom}%</span><ActionButton name="zoomIn" label="Phóng to" onClick={() => setZoom(v => Math.min(120,v+5))}/></div></div>
-        <div className="paper-scroll" ref={scoreRef} style={{ '--paper-zoom': zoom / 100 } as CSSProperties}>
+        <div className="paper-scroll" ref={scoreRef}>
           {score ? <ScoreStaffPreview score={score} /> : Array.from({ length: pages }, (_, i) => <ScorePage key={i+1} page={i+1} totalPages={pages} measures={measures.slice(i*60,(i+1)*60)} onMeasure={chooseMeasure} onAdd={addMeasure}/>)}
         </div>
         {notice && <div className="status-toast" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Đóng"><Icon name="close"/></button></div>}
         {omrNeedsReview && <div className="status-toast" role="alert"><b>OMR · CHƯA ĐƯỢC XÁC MINH</b><span>Kết quả nhận dạng chỉ là bản nháp. Hãy đối chiếu từng khuông, khóa nhạc, dấu hóa, cao độ, trường độ, nhịp, dấu lặng và từng bè với PDF gốc. Không dùng làm bản chính thức hoặc đem xuất bản khi chưa được người có chuyên môn kiểm tra.</span></div>}
         {score && <div className="loaded-score"><b>{score.title || 'Bản nhạc đã mở'}</b><span>{score.parts.length} bè · MusicXML</span><PianoPlayback score={score}/></div>}
-        {pianoOpen && <div className="piano-panel"><div className="piano-heading"><b>Piano</b><ActionButton name="close" label="Đóng piano" onClick={() => setPianoOpen(false)}/></div><div className="piano-keys">{Array.from({length:28},(_,i)=><button type="button" key={i} className={[1,3,6,8,10,13,15,18,20,22,25,27].includes(i)?'black-key':''} aria-label="Phím piano"/>)}</div><div className="octave-row"><span>Quãng 3</span><span>Quãng 4</span><span>Quãng 5</span></div></div>}
       </section>
-      <aside className="options-panel">
-        <div className="options-top"><b>{toolLabel}</b><span>THAO TÁC</span></div>
-        <div className="options-content">
-          {activeTool === 'pen' && <><p className="option-kicker">KIỂU NÉT</p><button className="option-tile selected">Bút ký âm</button><button className="option-tile">Bút chì</button><button className="option-tile">Tẩy</button><p className="option-kicker">ĐỘ DÀY</p><input type="range" min="1" max="8" defaultValue="3"/><p className="option-kicker">MÀU NÉT</p><div className="swatches"><i/><i/><i/></div></>}
-          {activeTool === 'text' && <><p className="option-kicker">NỘI DUNG</p><button className="option-tile selected">Văn bản</button><button className="option-tile">Lời ca</button><button className="option-tile">Ký hiệu âm nhạc</button><p className="option-kicker">CỠ CHỮ</p><input type="range" min="10" max="32" defaultValue="16"/></>}
-          {activeTool === 'select' && <><p className="option-kicker">PHẠM VI</p><button className="option-tile" onClick={() => setSelectedMeasures([activeMeasure])}>Một ô nhịp</button><button className="option-tile" onClick={() => setSelectedMeasures([activeMeasure,activeMeasure+1])}>Nhiều ô nhịp</button><p className="option-kicker">SAO CHÉP VÀ DÁN</p><div className="compact-actions"><ActionButton name="copy" label="Sao chép" onClick={copySelection}/><ActionButton name="cut" label="Cắt" onClick={() => {copySelection();setMeasures(old=>old.filter(m=>!selectedMeasures.includes(m.id)));setSelectedMeasures([])}}/><ActionButton name="paste" label="Dán" onClick={pasteSelection}/><ActionButton name="trash" label="Xóa" onClick={() => {setMeasures(old=>old.filter(m=>!selectedMeasures.includes(m.id)));setSelectedMeasures([])}}/></div><p className="option-kicker">CÁCH DÁN</p><button className={'option-tile'+(insertMode==='replace'?' selected':'')} onClick={() => setInsertMode('replace')}>Dán thay thế · chọn đủ ô nhịp</button><button className={'option-tile'+(insertMode==='insert'?' selected':'')} onClick={() => setInsertMode('insert')}>Dán chèn · đẩy phần sau</button><p className="helper-copy">Đang chọn: {selectedMeasures.length} ô nhịp · Đã sao chép: {clipboard.length} ô nhịp</p></>}
-          {activeTool === 'piano' && <><p className="option-kicker">BÀN PHÍM</p><button className="option-tile selected" onClick={() => setPianoOpen(true)}>Mở bàn phím piano</button><p className="helper-copy">Dùng biểu tượng piano quen thuộc, mở bàn phím ngang phía dưới bản nhạc.</p></>}
-        </div>
-      </aside>
+
     </div>
   </main>
 }
