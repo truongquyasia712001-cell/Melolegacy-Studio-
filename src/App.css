@@ -135,3 +135,9 @@
  .status-toast{bottom:88px}
  .loaded-score{bottom:88px;max-width:calc(100% - 24px)}
 }
+
+/* SMuFL Bravura is used for every engraved music glyph, not system text fallbacks. */
+.staff-svg .staff-notehead,.staff-svg .staff-rest,.staff-svg .staff-accidental,.staff-svg .staff-key-sign,.staff-svg .staff-clef{font-family:'Bravura',serif}
+.staff-svg .staff-notehead{font-size:19px;fill:#302b25}
+.staff-clef{font-family:'Bravura',serif}
+.note-dot{font-family:'Bravura',serif;font-size:18px;width:auto;height:auto;background:transparent;border-radius:0;transform:none;line-height:1}
