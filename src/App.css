@@ -72,3 +72,66 @@
 .staff-svg .staff-tie{fill:none;stroke:#302b25;stroke-width:1.2}
 .staff-disclaimer{margin:18px 0 0;padding:12px 14px;border-left:2px solid #d8c18a;background:#fbf8f0;color:#85765a;font-size:10px;line-height:1.6}
 @media(max-width:650px){.staff-renderer{padding:22px 14px 18px}.staff-renderer-head b{font-size:17px}.staff-renderer-head>span{font-size:7px}}
+
+
+/* Composer Room: fixed tool rails and contextual floating bubbles. */
+.composer-topbar{height:58px;min-height:58px;gap:14px}
+.composer-topbar .main-tools{justify-content:center;gap:14px}
+.composer-topbar .pinned-right{position:relative}
+.composer-topbar .pinned-left{border-right:0;padding-right:0}
+.top-export{right:0;top:50px}
+.paper-scroll{padding-bottom:112px}
+.paper-stage{background:#f1eee7}
+.composer-dock{position:absolute;z-index:28;left:50%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;max-width:calc(100% - 20px);pointer-events:none}
+.composer-toolbar{display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 10px;border:1px solid #e3d7bd;border-radius:18px;background:rgba(255,255,255,.96);box-shadow:0 8px 30px #33261320;backdrop-filter:blur(14px);pointer-events:auto}
+.dock-tool{width:42px;height:42px;display:grid;place-items:center;border:0;border-radius:12px;background:transparent;color:#5a503e}
+.dock-tool svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dock-tool:hover,.dock-tool.active{background:#f7efd9;color:#987128;box-shadow:inset 0 0 0 1px #e9d9b4}
+.composer-bubble{width:min(560px,calc(100vw - 28px));max-height:min(58vh,520px);overflow:auto;padding:14px;border:1px solid #e4d7bc;border-radius:18px;background:rgba(255,255,255,.98);box-shadow:0 14px 42px #3024142b;pointer-events:auto;overscroll-behavior:contain}
+.composer-bubble-piano{width:min(720px,calc(100vw - 28px))}
+.bubble-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;color:#705323;font:17px Georgia,serif}
+.bubble-heading button{width:32px;height:32px;border:0;border-radius:9px;background:#f8f4ea;color:#79623a;display:grid;place-items:center}
+.bubble-heading svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
+.symbol-browser{display:grid;grid-template-columns:132px minmax(0,1fr);gap:12px}
+.symbol-groups{display:flex;flex-direction:column;gap:5px}
+.symbol-groups button{padding:9px 10px;border:1px solid transparent;border-radius:9px;background:transparent;text-align:left;color:#6d604a;font-size:12px}
+.symbol-groups button.active{background:#f8f1df;border-color:#eadbb8;color:#8b6829}
+.symbol-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.symbol-grid button{min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border:1px solid #eee7da;border-radius:10px;background:#fff;color:#4b4030}
+.symbol-grid button:hover{border-color:#d5bc7e;background:#fffcf4}
+.smufl-glyph{font-family:'Bravura',serif;font-size:34px;line-height:1.1}
+.symbol-grid small{font-size:10px;color:#8b7d64;text-align:center}
+.bubble-note{margin:10px 2px 0;color:#96886e;font-size:10px;line-height:1.5}
+.piano-bubble-keys{height:142px;display:flex;position:relative;border:1px solid #cfc7b8;border-radius:8px;background:#fff;overflow:hidden}
+.piano-bubble-keys button{height:100%;min-width:0;flex:1;display:flex;align-items:flex-end;justify-content:center;padding:0 0 8px;border:0;border-right:1px solid #d2cabb;border-radius:0;background:linear-gradient(#fff,#f8f6f0);color:#998b71;font-size:9px}
+.piano-bubble-keys button.black{position:relative;z-index:2;flex:0 0 0;width:0;min-width:0;padding:0;border:0}
+.piano-bubble-keys button.black:after{content:'';position:absolute;top:0;left:-11px;width:22px;height:86px;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#26231e,#5b5549,#211f1b);box-shadow:0 2px 4px #0003}
+.rhythm-controls{display:flex;flex-direction:column;gap:13px}
+.tempo-readout{display:flex;align-items:baseline;justify-content:center;gap:7px;color:#8b6829}
+.tempo-readout strong{font:42px Georgia,serif}
+.tempo-readout span{font-size:11px;letter-spacing:.12em}
+.rhythm-controls input[type=range]{width:100%;accent-color:#b18a3d}
+.rhythm-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rhythm-row label{display:flex;align-items:center;gap:8px;color:#75664b;font-size:12px}
+.rhythm-row select{padding:8px 12px;border:1px solid #e5dac5;border-radius:9px;background:#fff;color:#574a33}
+.rhythm-primary{padding:10px 18px;border:0;border-radius:10px;background:#a98135;color:#fff;font-size:12px;font-weight:650}
+.beat-dots{display:flex;justify-content:center;gap:12px;padding:4px}
+.beat-dots i{width:12px;height:12px;border-radius:50%;background:#e6dece}
+.beat-dots i.active{background:#c69a43;box-shadow:0 0 0 5px #f6ecd5}
+.status-toast{bottom:92px}
+.loaded-score{bottom:92px}
+@media(max-width:650px){
+ .composer-topbar{height:54px;min-height:54px;gap:4px;padding:0 5px}
+ .composer-topbar .main-tools{gap:0}
+ .composer-topbar .icon-button{width:36px;height:36px}
+ .composer-toolbar{gap:1px;padding:5px 6px;border-radius:15px}
+ .dock-tool{width:36px;height:38px}
+ .dock-tool svg{width:21px;height:21px}
+ .symbol-browser{grid-template-columns:105px minmax(0,1fr);gap:8px}
+ .symbol-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .composer-bubble{max-height:52vh;padding:11px}
+ .piano-bubble-keys{height:112px}
+ .piano-bubble-keys button.black:after{height:68px}
+ .status-toast{bottom:88px}
+ .loaded-score{bottom:88px;max-width:calc(100% - 24px)}
+}
