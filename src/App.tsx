@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import { LocalLibrary } from './music/LocalLibrary'
-import type { LocalScoreDocument } from './music/localStore'
+import { DEVICE_LOCAL_OWNER_ID, saveLocalAsset, saveLocalScore, type LocalScoreDocument } from './music/localStore'
 import { parseMidi, parseMusicXml } from './music'
 import { recognizePdfWithMelobot } from './music/recognitionApi'
 import type { Score } from './music'
@@ -80,6 +80,27 @@ export default function App() {
   const scoreRef = useRef<HTMLDivElement>(null)
   const pages = Math.max(1, Math.ceil(measures.length / 60))
   const toolLabel = useMemo(() => ({ pen: 'Bút', text: 'Chữ', select: 'Chọn vùng', piano: 'Piano' }[activeTool]), [activeTool])
+  async function saveOriginal(file: File, kind: 'musicxml' | 'midi' | 'pdf') {
+    return saveLocalAsset({
+      ownerId: DEVICE_LOCAL_OWNER_ID,
+      title: file.name,
+      kind,
+      mimeType: file.type || (kind === 'pdf' ? 'application/pdf' : kind === 'midi' ? 'audio/midi' : 'application/vnd.recordare.musicxml+xml'),
+      blob: file,
+    })
+  }
+  async function saveNormalizedScore(musicxml: string, sourceAssetId: string) {
+    const parsed = parseMusicXml(musicxml)
+    await saveLocalScore({
+      id: `score-${sourceAssetId}`,
+      ownerId: DEVICE_LOCAL_OWNER_ID,
+      title: parsed.score.title || 'Bản nhạc chưa đặt tên',
+      musicxml,
+      sourceAssetId,
+    })
+    setScore(parsed.score)
+    return parsed.score
+  }
   function openSavedScore(saved: LocalScoreDocument) {
     try { setScore(parseMusicXml(saved.musicxml).score); setNotice('Đã mở ' + saved.title); setLibraryOpen(false) }
     catch (error) { setNotice(error instanceof Error ? error.message : 'Không thể mở bản nhạc.') }
@@ -93,9 +114,10 @@ export default function App() {
     }
     if (/\.(mid|midi)$/i.test(file.name) || file.type === 'audio/midi' || file.type === 'audio/x-midi') {
       try {
+        await saveOriginal(file, 'midi')
         const parsed = parseMidi(await file.arrayBuffer())
         setScore(parsed.score)
-        setNotice('Đã mở MIDI: ' + file.name + '. Kiểm tra các bè, nhịp và cao độ trước khi tiếp tục.')
+        setNotice('Đã lưu bản MIDI gốc vào thư viện và mở dữ liệu đọc được. Kiểm tra các bè, nhịp và cao độ trước khi tiếp tục.')
       } catch (error) {
         setNotice(error instanceof Error ? error.message : 'Không đọc được tệp MIDI.')
       }
@@ -104,9 +126,10 @@ export default function App() {
     if (/\.pdf$/i.test(file.name) || file.type === 'application/pdf') {
       setNotice('Đang gửi PDF đến MeloBot để nhận dạng…')
       try {
+        const original = await saveOriginal(file, 'pdf')
         const musicxml = await recognizePdfWithMelobot(file)
-        setScore(parseMusicXml(musicxml).score)
-        setNotice('MeloBot đã trả MusicXML. Vui lòng đối chiếu bản nhận dạng với PDF gốc trước khi sử dụng.')
+        await saveNormalizedScore(musicxml, original.id)
+        setNotice('Đã lưu PDF gốc và MusicXML nhận dạng vào thư viện. Vui lòng đối chiếu bản nhận dạng với PDF gốc trước khi sử dụng.')
       } catch (error) {
         setNotice(error instanceof Error ? error.message : 'Không thể kết nối MeloBot.')
       }
