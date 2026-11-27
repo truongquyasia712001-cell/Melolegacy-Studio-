@@ -48,7 +48,7 @@ function StaffSystem({ row, first, last, measures, onMeasure, onAdd }: { row: nu
   const firstMeasure = measures[0]?.id || row * 5 + 1
   return <div className="staff-system">
     <span className="measure-index">{firstMeasure}</span>
-    <span className="staff-clef">𝄞</span>
+    <span className="staff-clef">{String.fromCodePoint(0xe050)}</span>
     {first && <span className="time-signature"><b>4</b><b>4</b></span>}
     <div className="measure-run">
       {measures.map((measure, index) => <button className="measure-cell" key={measure.id} type="button" onClick={() => onMeasure(measure.id)} aria-label={'Ô nhịp ' + measure.id}>
