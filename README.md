@@ -27,4 +27,6 @@ Cùng học tập, sáng tác, bảo tồn và trao truyền di sản âm nhạc
 
 ## Tài liệu thiết kế
 
+- [Kiến trúc Core độc lập, AI tùy chọn](docs/core-ai-independent-architecture.md): nguyên tắc vận hành MeloLegacy không phụ thuộc AI, ranh giới Core/AI và tiêu chí nghiệm thu.
+
 - [Composer Room — Phòng soạn nhạc](docs/composer-room.md): giấy soạn nhạc đa bố cục, tự dàn trang, chỉnh sửa đầy đủ, OMR PDF/ảnh, lớp phủ nhận dạng, xác minh và chuyển giao tự động.
