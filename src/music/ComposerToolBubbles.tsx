@@ -5,8 +5,8 @@ type Props = { onUploadPDF: () => void; onUndo?: () => void; onRedo?: () => void
 const glyph = (hex: string) => String.fromCodePoint(Number.parseInt(hex.replace('U+', ''), 16))
 const groups = [
   { id: 'notes', title: 'Nốt nhạc', items: [
-    ['Nốt tròn','U+E0A2'],['Nốt trắng','U+E0A3'],['Nốt đen','U+E0A4'],['Đầu nốt vuông đôi','U+E0A0'],
-    ['Móc đơn','U+E1D7'],['Móc kép','U+E1D9'],['Móc ba','U+E1DB'],['Móc bốn','U+E1DD'],
+    ['Nốt tròn','U+E1D2'],['Nốt trắng','U+E1D3'],['Nốt đen','U+E1D5'],['Móc đơn','U+E1D7'],
+    ['Móc kép','U+E1D9'],['Móc ba','U+E1DB'],['Móc bốn','U+E1DD'],['Móc năm','U+E1DF'],
   ]},
   { id: 'rests', title: 'Dấu lặng', items: [
     ['Lặng tròn','U+E4E3'],['Lặng trắng','U+E4E4'],['Lặng đen','U+E4E5'],['Lặng móc đơn','U+E4E6'],
