@@ -23,6 +23,8 @@ jobs:
         run: npm install
       - name: MusicXML timing tests
         run: npm run test:musicxml
+      - name: SMuFL registry and Bravura glyph tests
+        run: npm run test:smufl
       - name: TypeScript and production build
         run: npm run build
       - name: Lint
