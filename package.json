@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test:musicxml": "node --test src/music/musicxml-timing.test.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:smufl": "node --test src/music/smufl-registry.test.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
