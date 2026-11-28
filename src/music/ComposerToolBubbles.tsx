@@ -5,12 +5,14 @@ type Props = { onUploadPDF: () => void; onUndo?: () => void; onRedo?: () => void
 const glyph = (hex: string) => String.fromCodePoint(Number.parseInt(hex.replace('U+', ''), 16))
 const groups = [
   { id: 'notes', title: 'Nốt nhạc', items: [
-    ['Nốt tròn','U+E1D2'],['Nốt trắng','U+E1D3'],['Nốt đen','U+E1D5'],['Móc đơn','U+E1D7'],
-    ['Móc kép','U+E1D9'],['Móc ba','U+E1DB'],['Móc bốn','U+E1DD'],['Móc năm','U+E1DF'],
+    ['Nốt kép (breve)','U+E1D0'],['Nốt tròn','U+E1D2'],['Nốt trắng','U+E1D3'],['Nốt đen','U+E1D5'],
+    ['Móc đơn','U+E1D7'],['Móc kép','U+E1D9'],['Móc ba','U+E1DB'],['Móc bốn','U+E1DD'],['Móc năm','U+E1DF'],
+    ['Nốt 1/256','U+E1E1'],['Nốt 1/512','U+E1E3'],['Nốt 1/1024','U+E1E5'],
   ]},
   { id: 'rests', title: 'Dấu lặng', items: [
-    ['Lặng tròn','U+E4E3'],['Lặng trắng','U+E4E4'],['Lặng đen','U+E4E5'],['Lặng móc đơn','U+E4E6'],
+    ['Lặng kép (breve)','U+E4E2'],['Lặng tròn','U+E4E3'],['Lặng trắng','U+E4E4'],['Lặng đen','U+E4E5'],['Lặng móc đơn','U+E4E6'],
     ['Lặng móc kép','U+E4E7'],['Lặng móc ba','U+E4E8'],['Lặng móc bốn','U+E4E9'],['Lặng móc năm','U+E4EA'],
+    ['Lặng 1/256','U+E4EB'],['Lặng 1/512','U+E4EC'],['Lặng 1/1024','U+E4ED'],
   ]},
   { id: 'accidentals', title: 'Dấu hóa', items: [
     ['Thăng','U+E262'],['Giáng','U+E260'],['Bình','U+E261'],['Thăng kép','U+E263'],['Giáng kép','U+E264'],
